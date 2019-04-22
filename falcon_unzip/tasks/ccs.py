@@ -269,7 +269,6 @@ def run_workflow(wf, config, unzip_config_fn):
             if(lc[0][0] == "0"):
                 CTGS.append(lc[0])
 
-
     rid_to_ctg = "./3-unzip/sorting/rid_to_cgt.txt"
 
     wf.addTask(gen_task(
@@ -473,7 +472,6 @@ def run_workflow(wf, config, unzip_config_fn):
     readtoctg   = "./4-polishing/input/read2ctg.txt"
     ofastq_fn   = "./4-polishing/input/preamble.fastq"
 
-
     wf.addTask(gen_task(
         script=TASK_POLISH_PREAMBLE,
         inputs={
@@ -523,6 +521,7 @@ def run_workflow(wf, config, unzip_config_fn):
         ))
 
     wf.refreshTargets()
+
     merged_unphased = "4-polishing/merged-unphased/merged_unphased.sorted.bam"
 
     wf.addTask(gen_task(
@@ -536,6 +535,8 @@ def run_workflow(wf, config, unzip_config_fn):
     ))
 
     wf.refreshTargets()
+
+    # TODO: Someday SIZES/PH/SKIP needs to be its own task.
 
     SIZES = {}
 
@@ -553,16 +554,16 @@ def run_workflow(wf, config, unzip_config_fn):
             lc = line.strip().split(" ")
             PH[lc[1]] = 1 + PH.get(lc[1], 0)
 
-    DEST = {}
+    SKIP = set()
     for (ctg, count) in PH.iteritems():
         if count < 10:
             LOG.warning("ctg {} is being skipped due to depth of coverage {} < 10 reads total".format(ctg, count))
-            DEST[ctg] = 1
+            SKIP.add(ctg)
         if int(SIZES[ctg]) < 10000:
             LOG.warning("ctg {} is being skipped due to size {} < 10kbp".format(ctg, SIZES[ctg]))
-            DEST[ctg] = 1
+            SKIP.add(ctg)
 
-    for d in DEST:
+    for d in SKIP:
         del PH[d]
 
     fns = list()
@@ -589,6 +590,7 @@ def run_workflow(wf, config, unzip_config_fn):
 
     wf.refreshTargets()
 
+    # TODO: Someday this needs to be its own task.
     h_ctg_fn = 'h_ctg.polished.fa'
     p_ctg_fn = 'p_ctg.polished.fa'
     io.touch(h_ctg_fn)
