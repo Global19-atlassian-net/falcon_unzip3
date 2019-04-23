@@ -15,12 +15,12 @@ samtools faidx {input.FA} {params.ctg} > ref.fasta
 perl -lane 'print $F[0] if $F[1] eq "{params.ctg}" && $F[2] != -1' {input.READTOCTG} | sort | uniq > readnames.txt
 samtools view -F 1796 {input.UBAM} {params.ctg} | cut -f 1 | sort | uniq >> readnames.txt
 samtools fqidx -r readnames.txt {input.FQ} > reads.fastq
-minimap2 -a -x asm5 -t 1 ref.fasta reads.fastq | samtools view -F 1796 > aln.sam
-racon reads.fastq aln.sam ref.fasta > {output.POL}
+minimap2 -a -x asm5 -t {params.pypeflow_nproc} ref.fasta reads.fastq | samtools view -F 1796 > aln.sam
+racon -t {params.pypeflow_nproc} reads.fastq aln.sam ref.fasta > {output.POL}
 """
 
 TASK_GATHER_UNPHASED="""
-find {input.ALL} > bam_list.txt
+find {input.ctg*} > bam_list.txt
 samtools merge -b bam_list.txt tmp.bam
 samtools sort -o {output.UBAM} tmp.bam
 samtools index {output.UBAM}
@@ -104,8 +104,11 @@ hasm_dir=$(dirname {input.p_ctg})
 
 # TODO: Should we look at ../reads/ctg_list ?
 
-python -m falcon_unzip.mains.graphs_to_h_tigs_2 split --gathered-rid-to-phase={input.gathered_rid_json} --base-dir={params.topdir} --fc-asm-path ${{asm_dir}} --fc-hasm-path ${{hasm\
-_dir}} --rid-phase-map {input.rid_to_phase_all} --fasta {input.preads4falcon} --split-fn={output.split} --bash-template-fn={output.bash_template}
+python -m falcon_unzip.mains.graphs_to_h_tigs_2 split \
+        --gathered-rid-to-phase={input.gathered_rid_json} --base-dir={params.topdir} \
+        --fc-asm-path ${{asm_dir}} --fc-hasm-path ${{hasm_dir}} \
+        --rid-phase-map {input.rid_to_phase_all} --fasta {input.preads4falcon} \
+        --split-fn={output.split} --bash-template-fn={output.bash_template}
 
 # The bash-template is just a dummy, for now.
 """
@@ -115,8 +118,10 @@ TASK_HASM_SCRIPT = """\
 # TODO: Needs preads.db
 
 rm -f ./ctg_paths
-python -m falcon_unzip.mains.ovlp_filter_with_phase_strict --fofn {input.las_fofn} --max-diff 120 --max-cov 120 --min-cov 1 --n-core 48 --min-len 2500 --db {input.preads_db} --rid-phas\
-e-map {input.rid_to_phase_all} > preads.p_ovl
+python -m falcon_unzip.mains.ovlp_filter_with_phase_strict \
+        --fofn {input.las_fofn} --max-diff 120 --max-cov 120 --min-cov 1 \
+        --n-core {params.pypeflow_nproc} --min-len 2500 --db {input.preads_db} \
+        --rid-phase-map {input.rid_to_phase_all} > preads.p_ovl
 python -m falcon_unzip.mains.phased_ovlp_to_graph preads.p_ovl --min-len 2500 > fc.log
 
 if [[ ! -e ./ctg_paths ]]; then
@@ -143,10 +148,10 @@ fi
 
 TASK_PHASING_GATHER_SCRIPT = """\
 # creates a master table of rid to phase
-cat {input.ALL} > {output.rid_to_phase_all}
+cat {input.ctg*} > {output.rid_to_phase_all}
 
 # creates the needed gathering JSON
-find {input.ALL} | xargs -I [] readlink -f [] | python -m falcon_unzip.mains.gen_rid_gathered_json > {output.gathered_rid_json}
+find {input.ctg*} | xargs -I [] readlink -f [] | python -m falcon_unzip.mains.gen_rid_gathered_json > {output.gathered_rid_json}
 """
 
 TASK_READ_PHASING = """
@@ -222,22 +227,24 @@ def run_workflow(wf, config, unzip_config_fn):
     a_ctg_fn = os.path.join(asm_dir, 'a_ctg.fa')
     p_tile_fn = os.path.join(asm_dir, 'p_ctg_tiling_path')
     a_tile_fn = os.path.join(asm_dir, 'a_ctg_tiling_path')
-    aln_cpu = '16'
-    sort_cpu = '3'
 
-    # For now, use the same job-distribution parameters everywhere.
+    # Typical job-dist configuration
     dist = Dist(
         job_dict=config['job.defaults'],
-        #NPROC=4,
-        #use_tmpdir=False,
+        use_tmpdir=False, # until we fix a bug in pypeflow
+    )
+
+    # 1-proc jobs
+    dist_one = Dist(
+        NPROC = 1,
+        use_tmpdir=False, # until we fix a bug in pypeflow
     )
 
     # For strictly local jobs, use this.
-    distl = Dist(
-        #job_dict=config['job.defaults'],
-        NPROC=1,
+    dist_local = Dist(
         local=True,
-        use_tmpdir=False,
+        NPROC=1,
+        use_tmpdir=False, # until we fix a bug in pypeflow
     )
 
     p_ctg_fai_fn = "./2-asm-falcon/p_ctg.fa.fai"
@@ -253,10 +260,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 "FAI": "3-unzip/ctgs/concat.fa.fai",
             },
             parameters={},
-            dist = Dist(
-                job_dict=config['job.defaults'],
-                NPROC=1,
-            )
+            dist=dist_one,
     ))
 
     wf.refreshTargets()
@@ -268,7 +272,6 @@ def run_workflow(wf, config, unzip_config_fn):
             lc = line.strip().split("\t")
             if(lc[0][0] == "0"):
                 CTGS.append(lc[0])
-
 
     rid_to_ctg = "./3-unzip/sorting/rid_to_cgt.txt"
 
@@ -282,10 +285,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 "OBAMA": "3-unzip/mapping/reads_mapped.bam",
             },
             parameters={},
-            dist = Dist(
-                job_dict=config['job.defaults'],
-                NPROC=aln_cpu, #TODO
-            )
+            dist=dist,
     ))
 
 
@@ -300,10 +300,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 "RID_TO_CTG" : rid_to_ctg,
             },
             parameters={},
-            dist = Dist(
-                job_dict=config['job.defaults'],
-                NPROC=sort_cpu, #TODO
-            )
+            dist=dist,
     ))
 
     readname_lookup = "3-unzip/readnames/readname_lookup.txt"
@@ -317,10 +314,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 'readname_lookup'  : readname_lookup,
             },
             parameters={},
-            dist = Dist(
-                job_dict=config['job.defaults'],
-                NPROC=sort_cpu, #TODO
-            )
+            dist=dist_one,
     ))
 
     collected = dict()
@@ -346,10 +340,7 @@ def run_workflow(wf, config, unzip_config_fn):
             parameters={
                 'ctg': ctg,
             },
-            dist = Dist(
-                job_dict=config['job.defaults'],
-                #NPROC=???, #TODO
-            )
+            dist=dist_one,
         ))
 
     wf.refreshTargets()
@@ -366,7 +357,7 @@ def run_workflow(wf, config, unzip_config_fn):
                  'gathered_rid_json' : gathered_rid_to_phase_json,
         },
         parameters={},
-        dist=distl
+        dist=dist_local,
     ))
 
     p_las_fofn_fn =   './1-preads_ovl/las-merge-combine/las_fofn.json'
@@ -387,10 +378,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 'p_ctg': hasm_p_ctg_fn,
             },
             parameters={},
-            dist = Dist(
-                job_dict=config['job.step.unzip.hasm'],
-                NPROC=1,
-            )
+            dist=dist,
     ))
 
     g2h_all_units_fn = './3-unzip/2-htigs/split/all-units-of-work.json'
@@ -437,11 +425,7 @@ def run_workflow(wf, config, unzip_config_fn):
             },
             parameters={},
         ),
-        dist=Dist(
-            NPROC=24,
-            job_dict=config['job.step.unzip.blasr_aln'],
-            use_tmpdir=False,
-        ),
+        dist=dist_one,  # single-threads for now
         run_script=TASK_GTOH_APPLY_UNITS_OF_WORK,
     )
 
@@ -460,11 +444,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 'h_ctg_fa': './3-unzip/all_h_ctg.fa',
             },
             parameters={},
-            dist=Dist(
-                NPROC=1,
-                job_dict=config['job.step.unzip.hasm'],
-                use_tmpdir=False,
-            ),
+            dist=dist_one,
     ))
 
     combined_ph = "./4-polishing/input/combined_ph.fa"
@@ -472,7 +452,6 @@ def run_workflow(wf, config, unzip_config_fn):
     combined_eg = "./4-polishing/input/combined_edges.txt"
     readtoctg   = "./4-polishing/input/read2ctg.txt"
     ofastq_fn   = "./4-polishing/input/preamble.fastq"
-
 
     wf.addTask(gen_task(
         script=TASK_POLISH_PREAMBLE,
@@ -491,11 +470,7 @@ def run_workflow(wf, config, unzip_config_fn):
             "FQO"       : ofastq_fn,
         },
         parameters={},
-        dist=Dist(
-            NPROC=1,
-            job_dict=config['job.step.unzip.hasm'],
-            use_tmpdir=False,
-        ),
+        dist=dist_one,
     ))
 
     wf.refreshTargets()
@@ -519,10 +494,11 @@ def run_workflow(wf, config, unzip_config_fn):
             parameters={
                 'ctg': ctg,
             },
-            dist=dist
+            dist=dist_one,
         ))
 
     wf.refreshTargets()
+
     merged_unphased = "4-polishing/merged-unphased/merged_unphased.sorted.bam"
 
     wf.addTask(gen_task(
@@ -532,10 +508,12 @@ def run_workflow(wf, config, unzip_config_fn):
             "UBAM": merged_unphased,
         },
         parameters={},
-        dist=dist
+        dist=dist_one,
     ))
 
     wf.refreshTargets()
+
+    # TODO: Someday SIZES/PH/SKIP needs to be its own task.
 
     SIZES = {}
 
@@ -553,16 +531,16 @@ def run_workflow(wf, config, unzip_config_fn):
             lc = line.strip().split(" ")
             PH[lc[1]] = 1 + PH.get(lc[1], 0)
 
-    DEST = {}
+    SKIP = set()
     for (ctg, count) in PH.iteritems():
         if count < 10:
             LOG.warning("ctg {} is being skipped due to depth of coverage {} < 10 reads total".format(ctg, count))
-            DEST[ctg] = 1
+            SKIP.add(ctg)
         if int(SIZES[ctg]) < 10000:
             LOG.warning("ctg {} is being skipped due to size {} < 10kbp".format(ctg, SIZES[ctg]))
-            DEST[ctg] = 1
+            SKIP.add(ctg)
 
-    for d in DEST:
+    for d in SKIP:
         del PH[d]
 
     fns = list()
@@ -584,11 +562,12 @@ def run_workflow(wf, config, unzip_config_fn):
             parameters={
                 'ctg': ctg,
             },
-            dist=dist
+            dist=dist,
         ))
 
     wf.refreshTargets()
 
+    # TODO: Someday this needs to be its own task.
     h_ctg_fn = 'h_ctg.polished.fa'
     p_ctg_fn = 'p_ctg.polished.fa'
     io.touch(h_ctg_fn)
