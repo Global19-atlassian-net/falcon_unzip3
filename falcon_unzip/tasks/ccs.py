@@ -20,7 +20,7 @@ racon -t {params.pypeflow_nproc} reads.fastq aln.sam ref.fasta > {output.POL}
 """
 
 TASK_GATHER_UNPHASED="""
-find {input.ALL} > bam_list.txt
+find {input.ctg*} > bam_list.txt
 samtools merge -b bam_list.txt tmp.bam
 samtools sort -o {output.UBAM} tmp.bam
 samtools index {output.UBAM}
@@ -148,10 +148,10 @@ fi
 
 TASK_PHASING_GATHER_SCRIPT = """\
 # creates a master table of rid to phase
-cat {input.ALL} > {output.rid_to_phase_all}
+cat {input.ctg*} > {output.rid_to_phase_all}
 
 # creates the needed gathering JSON
-find {input.ALL} | xargs -I [] readlink -f [] | python -m falcon_unzip.mains.gen_rid_gathered_json > {output.gathered_rid_json}
+find {input.ctg*} | xargs -I [] readlink -f [] | python -m falcon_unzip.mains.gen_rid_gathered_json > {output.gathered_rid_json}
 """
 
 TASK_READ_PHASING = """
