@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 from falcon_kit.pype import Dist
 #from falcon_kit import pype_tasks
 from falcon_kit.pype import (wrap_gen_task as gen_task, gen_parallel_tasks, Dist)
@@ -345,7 +345,7 @@ def run_workflow(wf, config, unzip_config_fn):
 
     wf.refreshTargets()
 
-    check(sorted(collected.itervalues()), sorted(glob.glob('3-unzip/0-phasing/*/uow-fake/rid_to_phase')))
+    check(sorted(collected.values()), sorted(glob.glob('3-unzip/0-phasing/*/uow-fake/rid_to_phase')))
 
     concatenated_rid_to_phase_fn = "3-unzip/0-phasing/gathered-rid-to-phase/rid_to_phase.all"
     gathered_rid_to_phase_json   = "3-unzip/0-phasing/gathered-rid-to-phase/gathered.json"
@@ -532,7 +532,7 @@ def run_workflow(wf, config, unzip_config_fn):
             PH[lc[1]] = 1 + PH.get(lc[1], 0)
 
     SKIP = set()
-    for (ctg, count) in PH.iteritems():
+    for (ctg, count) in PH.items():
         if count < 10:
             LOG.warning("ctg {} is being skipped due to depth of coverage {} < 10 reads total".format(ctg, count))
             SKIP.add(ctg)

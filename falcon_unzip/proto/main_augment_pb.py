@@ -4,16 +4,16 @@ import os
 import sys
 import argparse
 from falcon_kit import tiling_path
-import phasing_block
+from . import phasing_block
 import intervaltree.intervaltree as intervaltree
 #from intervaltree import * # Let's avoid this.
 import json
 import networkx as nx
-import sam2m4
+from . import sam2m4
 import collections
 import copy
 import falcon_kit.FastaReader
-import haplotig
+from . import haplotig
 import logging
 import time
 LOG = logging.getLogger() # root, to inherit from sub-loggers
@@ -50,7 +50,7 @@ def find_max_linear_region(all_regions, found_regions, reference_start, referenc
 def create_new_rid2phase(ctg_id, rid2phase, all_regions, m4, a_paths):
     # Hash the regions in an intervaltree
     intervals = []
-    for region_id in xrange(len(all_regions)):
+    for region_id in range(len(all_regions)):
         type_, edge_start_id, edge_end_id, pos_start, pos_end, htigs = all_regions[region_id]
         if type_ != 'linear':
             continue
@@ -76,7 +76,7 @@ def create_new_rid2phase(ctg_id, rid2phase, all_regions, m4, a_paths):
 
     # Initialize every read as unphased.
     new_rid2phase = {}
-    for rid, phase in rid2phase.iteritems():
+    for rid, phase in rid2phase.items():
         r_ctg_id, phase_block_id, phase_id = phase
         new_rid2phase[rid] = (r_ctg_id, -1, 0)
 
@@ -132,7 +132,7 @@ def create_new_rid2phase(ctg_id, rid2phase, all_regions, m4, a_paths):
         return vphase
 
     new_htig_to_phase = {}
-    for region_id in xrange(len(all_regions)):
+    for region_id in range(len(all_regions)):
         type_, edge_start_id, edge_end_id, pos_start, pos_end, htigs = all_regions[region_id]
         if type_ != 'simple':
             continue
@@ -142,9 +142,9 @@ def create_new_rid2phase(ctg_id, rid2phase, all_regions, m4, a_paths):
         # more than 1 haplotig, then there was a problem in the phasing process,
         # and we need to handle this special case.
         phase_to_htig = {}
-        for htig_name, htig in htigs.iteritems():
+        for htig_name, htig in htigs.items():
             htig_path = htig['path']
-            for edge_id in xrange(1, len(htig_path)):
+            for edge_id in range(1, len(htig_path)):
                 edge = htig_path[edge_id]
                 vphase = get_v_phase(edge)
                 if vphase[1] == '-1':
@@ -152,7 +152,7 @@ def create_new_rid2phase(ctg_id, rid2phase, all_regions, m4, a_paths):
                 phase_to_htig.setdefault(vphase, set())
                 phase_to_htig[vphase].add(htig_name)
 
-        for htig_name, htig in htigs.iteritems():
+        for htig_name, htig in htigs.items():
             htig_path = htig['path']
             htig_phase = htig['phase']
 
@@ -171,7 +171,7 @@ def create_new_rid2phase(ctg_id, rid2phase, all_regions, m4, a_paths):
             # First, check that the phasing of the bubble was sane.
             branch_phases = set()
             is_sane = True
-            for edge_id in xrange(1, len(htig_path)):   # Only `v` of each edge is used, so the last `w` is skipped.
+            for edge_id in range(1, len(htig_path)):   # Only `v` of each edge is used, so the last `w` is skipped.
                 edge = htig_path[edge_id]
                 vphase = get_v_phase(edge)
                 if vphase[1] == '-1':
@@ -197,7 +197,7 @@ def create_new_rid2phase(ctg_id, rid2phase, all_regions, m4, a_paths):
             if is_sane == False:
                 continue
 
-            for edge_id in xrange(1, len(htig_path)):
+            for edge_id in range(1, len(htig_path)):
             # for edge in htig_path:
                 edge = htig_path[edge_id]
                 vphase = get_v_phase(edge)
@@ -264,7 +264,7 @@ def delineate_regions(ctg_id, p_path, a_paths, a_placement):
     out_edges = {}
     in_edges = {}
 
-    for a_ctg_id, placement in a_placement.iteritems():
+    for a_ctg_id, placement in a_placement.items():
         start, end, p_ctg_id, a_ctg_id, first_node, last_node = placement
         # Add the out edges.
         out_edges.setdefault(first_node, set())
@@ -302,7 +302,7 @@ def delineate_regions(ctg_id, p_path, a_paths, a_placement):
         bubble_branches |= out_edges[v0]
         current_state = next_state
 
-    for i in xrange(len(p_path.edges)):
+    for i in range(len(p_path.edges)):
         w = p_path.edges[i].w
         if current_state == STATE_LINEAR:
             if w in out_edges:
@@ -457,7 +457,7 @@ def load_preads_alignments(sam_path):
         qname_dict[qname] = aln
         # qname_set.add(qname)
         # m4.append(aln)
-    m4 = [val for key, val in qname_dict.iteritems()]
+    m4 = [val for key, val in qname_dict.items()]
     m4 = sorted(m4, key = lambda x: x[9])
 
     return m4
@@ -470,7 +470,7 @@ def run(wd, ctg_id, extracted_ctg_fasta, p_ctg, p_ctg_tiling_path, a_ctg, a_ctg_
     ###################################################
     seqs, seq_lens = load_seqs([p_ctg, a_ctg])
 
-    seqs_for_ctg = {key: val for key, val in seqs.iteritems() if key.startswith(ctg_id)}
+    seqs_for_ctg = {key: val for key, val in seqs.items() if key.startswith(ctg_id)}
 
     ###################################################
     # Load tiling paths with coords, and filter the
@@ -527,7 +527,7 @@ def run(wd, ctg_id, extracted_ctg_fasta, p_ctg, p_ctg_tiling_path, a_ctg, a_ctg_
     # to construct the haplotigs.
     ###################################################
     with open(out_updated_rid_phase_map, 'w') as fp_out:
-        for key, val in updated_rid2phase.iteritems():
+        for key, val in updated_rid2phase.items():
             fp_out.write('%s %s %s %s\n' % (key, val[0], val[1], val[2]))
 
     ###################################################
@@ -536,14 +536,14 @@ def run(wd, ctg_id, extracted_ctg_fasta, p_ctg, p_ctg_tiling_path, a_ctg, a_ctg_
     ###################################################
     minced_ctg_path = os.path.join(wd, 'minced.fasta')
     with open(minced_ctg_path, 'w') as fp_out:
-        for region_id in xrange(len(all_regions)):
+        for region_id in range(len(all_regions)):
             type_, edge_start_id, edge_end_id, pos_start, pos_end, htigs = all_regions[region_id]
             if type_ == 'linear':
-                region_name = htigs.keys()[0]
+                region_name = list(htigs.keys())[0]
                 region_seq = seqs[ctg_id][pos_start:pos_end]
                 fp_out.write('>%s\n%s\n' % (region_name, region_seq))
             else:
-                for htig_name, htig in htigs.iteritems():
+                for htig_name, htig in htigs.items():
                     region_name = htig_name
                     if htig_name.endswith('_base'):
                         # This is the 'base' part of any bubble. Literally, a region

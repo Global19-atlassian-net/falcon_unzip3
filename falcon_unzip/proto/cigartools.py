@@ -22,7 +22,7 @@ def cigar_to_aln_array(cigar):
     """
     ret = []
     for op, count in cigar:
-        ret += [op for i in xrange(count)]
+        ret += [op for i in range(count)]
     return ret
 
 def aln_array_to_cigar(aln_array):
@@ -34,7 +34,7 @@ def aln_array_to_cigar(aln_array):
         return cigar
     count = 0
     prev_op = aln_array[0]
-    for i in xrange(len(aln_array)):
+    for i in range(len(aln_array)):
         op = aln_array[i]
         if op == prev_op:
             count += 1
@@ -59,7 +59,7 @@ def find_positions(aln_array, reference_start):
     ref_pos = reference_start + 0
     query_pos = 0
 
-    for op_id in xrange(len(aln_array)):
+    for op_id in range(len(aln_array)):
         op = aln_array[op_id]
         if op != CIGAR_OP_S:
             op_start = op_id
@@ -76,7 +76,7 @@ def find_positions(aln_array, reference_start):
     # while aln_array[op_end] == CIGAR_OP_S or aln_array[op_end] == CIGAR_OP_H:
     #     op_end -= 1
 
-    for op_id in xrange(len(aln_array)):
+    for op_id in range(len(aln_array)):
     # for op_id in xrange(op_start, op_end + 1):
         op = aln_array[op_id]
         cq = CONSUMES_QUERY[op]
@@ -113,7 +113,7 @@ def find_split_positions(aln_array, reference_start, reference_split_pos):
     """
     last_left_M_op = None
     op_id = 0
-    for op_id in xrange(len(aln_array)):
+    for op_id in range(len(aln_array)):
         op = aln_array[op_id]
         cq = CONSUMES_QUERY[op]
         cr = CONSUMES_REF[op]
@@ -127,7 +127,7 @@ def find_split_positions(aln_array, reference_start, reference_split_pos):
     split_op_id = op_id
 
     first_right_M_op = None
-    for op_id in xrange(split_op_id, len(aln_array)):
+    for op_id in range(split_op_id, len(aln_array)):
         op = aln_array[op_id]
         if CIGAR_IS_MATCH[aln_array[op_id]]:
             first_right_M_op = op_id
@@ -156,7 +156,7 @@ def split_aln_array(aln_array, reference_start, last_left_M_op, first_right_M_op
     right_aln_array = []
 
     # Process bases which need clipping.
-    for op_id in xrange(0, len(aln_array)):
+    for op_id in range(0, len(aln_array)):
         op = aln_array[op_id]
         cq = CONSUMES_QUERY[op]
         cr = CONSUMES_REF[op]

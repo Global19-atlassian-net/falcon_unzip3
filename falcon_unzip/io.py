@@ -1,4 +1,4 @@
-from __future__ import division
+
 from falcon_kit.io import (
         serialize, deserialize, log, mkdirs, syscall, capture, eng,
         rm, touch, filesize, exists_and_not_empty,

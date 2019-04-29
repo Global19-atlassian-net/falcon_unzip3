@@ -64,7 +64,7 @@ def path_to_seq(preads, path, with_first_read):
 def write_haplotig_path_and_edges(haplotigs, haplotigs_path_path, haplotigs_edges_path):
     with open(haplotigs_path_path, "w") as fp_h_tig_path, \
             open(haplotigs_edges_path, "w") as fp_edges:
-        for h_name, haplotig in haplotigs.iteritems():
+        for h_name, haplotig in haplotigs.items():
             for edge in haplotig.edges:
                 fp_edges.write(' '.join([str(val) for val in edge]) + '\n')
             for edge in haplotig.path:
@@ -76,7 +76,7 @@ def write_haplotigs(haplotigs, haplotig_seqs_out_path, fp_proto_log, hack_qnames
         # sorted_hnames = sorted(haplotigs.keys(), key = lambda x: (x.split('-')[-1]))
         # for h_name in sorted_hnames:
         #     haplotig = haplotigs[h_name]
-        for h_name, haplotig in haplotigs.iteritems():
+        for h_name, haplotig in haplotigs.items():
             num_htigs += 1
             fp_proto_log('[IS] Writing {}, h_name = {}'.format(num_htigs, h_name))
             qname = haplotig.name
@@ -87,9 +87,9 @@ def write_haplotigs(haplotigs, haplotig_seqs_out_path, fp_proto_log, hack_qnames
 
 def write_diploid_groups(diploid_groups, out_path, fp_proto_log):
     haplotigs = {}
-    for pb, phases in diploid_groups.iteritems():
+    for pb, phases in diploid_groups.items():
         # Sanity check.
-        if len(phases.keys()) != 2:
+        if len(phases) != 2:
             continue
         # `phases` is a dict, where key is the phase ID, and value is [haplotig, aln]
         hap0, aln0 = phases[0]
