@@ -1,4 +1,4 @@
-from __future__ import division
+
 from falcon_kit.FastaReader import open_fasta_reader
 from .. import io
 import argparse
@@ -57,8 +57,8 @@ def fetch_ref_and_reads(
                 io.mkdirs(os.path.join(out_dir, s_id))
                 ref_out = open(os.path.join(out_dir, s_id, 'ref.fa'), 'w')
 
-            print >>ref_out, '>%s' % s_id
-            print >>ref_out, s.sequence
+            print('>%s' % s_id, file=ref_out)
+            print(s.sequence, file=ref_out)
             all_ctg_ids.add(s_id)
             ref_out.close()
 
@@ -117,8 +117,8 @@ def fetch_ref_and_reads(
                         ctg_id = 'unassigned'
 
                     with reopened_fasta_out(ctg_id) as read_out:
-                        print >>read_out, '>' + rid
-                        print >>read_out, r.sequence
+                        print('>' + rid, file=read_out)
+                        print(r.sequence, file=read_out)
 
     with open(os.path.join(out_dir, ctg_list_fn), 'w') as f:
         for ctg_id in sorted(list(all_ctg_ids)):
@@ -142,7 +142,7 @@ def fetch_ref_and_reads(
                 LOG.info('Skipping contig: {}. Reason: non-existent or empty ref file ({}).'.format(ctg_id, ref_fa_path))
                 continue
 
-            print >>f, ctg_id
+            print(ctg_id, file=f)
 
 def parse_args(argv):
     description = 'Using the read to contig mapping data, to partition the reads (into {ctg_id}_reads.fa and {ctg_id}_ref.fa) grouped by contigs.'

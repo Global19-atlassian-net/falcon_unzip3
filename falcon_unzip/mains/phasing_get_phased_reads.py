@@ -48,9 +48,9 @@ def get_phased_reads(phased_reads_fn, q_id_map_fn, vmap_fn, p_variant_fn, ctg_id
             pl.sort()
             for p in pl:
                 if vl.get((p, 0), 0) - vl.get((p, 1), 0) > 1:
-                    print >> out_f, r, ctg_id, p, 0, vl.get((p, 0), 0), vl.get((p, 1), 0), rid_map[r]
+                    print(r, ctg_id, p, 0, vl.get((p, 0), 0), vl.get((p, 1), 0), rid_map[r], file=out_f)
                 elif vl.get((p, 1), 0) - vl.get((p, 0), 0) > 1:
-                    print >> out_f, r, ctg_id, p, 1, vl.get((p, 0), 0), vl.get((p, 1), 0), rid_map[r]
+                    print(r, ctg_id, p, 1, vl.get((p, 0), 0), vl.get((p, 1), 0), rid_map[r], file=out_f)
 
 
 ######

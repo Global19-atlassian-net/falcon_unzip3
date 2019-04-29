@@ -198,18 +198,18 @@ def get_phased_blocks(vmap_fn, atable_fn, p_variant_fn):
         phase_block_id -= 1
 
     with open(p_variant_fn, "w") as out_f:
-        for pid in xrange(1, phase_block_id + 1):
+        for pid in range(1, phase_block_id + 1):
             if len(phase_blocks[pid]) == 0:
                 continue
             min_ = min([x[0] for x in phase_blocks[pid]])
             max_ = max([x[0] for x in phase_blocks[pid]])
 
-            print >>out_f, "P", pid, min_, max_, max_ - \
-                min_, len(phase_blocks[pid]), 1.0 * (max_ - min_) / len(phase_blocks[pid])
+            print("P", pid, min_, max_, max_ - \
+                min_, len(phase_blocks[pid]), 1.0 * (max_ - min_) / len(phase_blocks[pid]), file=out_f)
             for p, b1, b2 in phase_blocks[pid]:
                 rb = ref_base[p]
-                print >>out_f, "V", pid, p, "%d_%s_%s" % (p, rb, b1), "%d_%s_%s" % (
-                    p, rb, b2), left_extent[p], right_extent[p], left_score[p], right_score[p]
+                print("V", pid, p, "%d_%s_%s" % (p, rb, b1), "%d_%s_%s" % (
+                    p, rb, b2), left_extent[p], right_extent[p], left_score[p], right_score[p], file=out_f)
 
 
 ######

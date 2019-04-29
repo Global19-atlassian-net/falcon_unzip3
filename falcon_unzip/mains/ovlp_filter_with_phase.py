@@ -212,14 +212,14 @@ def filter_stage3(input_):
                 left.sort()
                 right.sort()
 
-                for i in xrange(len(left)):
+                for i in range(len(left)):
                     inphase, score, m_range, ovlp = left[i]
                     ovlp_output.append(ovlp)
                     # print " ".join(ovlp), read_end_data[current_q_id]
                     if i >= bestn and m_range > 1000:
                         break
 
-                for i in xrange(len(right)):
+                for i in range(len(right)):
                     inphase, score, m_range, ovlp = right[i]
                     ovlp_output.append(ovlp)
                     # print " ".join(ovlp), read_end_data[current_q_id]
@@ -263,14 +263,14 @@ def filter_stage3(input_):
         left.sort()
         right.sort()
 
-        for i in xrange(len(left)):
+        for i in range(len(left)):
             inphase, score, m_range, ovlp = left[i]
             ovlp_output.append(ovlp)
             # print " ".join(ovlp), read_end_data[current_q_id]
             if i >= bestn and m_range > 1000:
                 break
 
-        for i in xrange(len(right)):
+        for i in range(len(right)):
             inphase, score, m_range, ovlp = right[i]
             ovlp_output.append(ovlp)
             # print " ".join(ovlp), read_end_data[current_q_id]
@@ -333,7 +333,7 @@ def run(args):
             inputs.append((db_fn, fn, max_diff, max_cov, min_cov, min_len, ignore_all, contained, bestn))
     for res in exe_pool.imap(filter_stage3, inputs):
         for l in res[1]:
-            print " ".join(l)
+            print(" ".join(l))
 
 
 ######

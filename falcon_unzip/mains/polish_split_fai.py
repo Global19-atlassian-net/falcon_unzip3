@@ -14,7 +14,7 @@ def run(fai, ctg):
             lc = line.strip().split("\t")
             name = lc[0].split("_")
             if(name[0] == ctg):
-                print(lc[0])
+                print((lc[0]))
 
 
 def parse_args(argv):

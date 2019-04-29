@@ -1,4 +1,4 @@
-from __future__ import division
+
 import os
 
 
@@ -58,7 +58,7 @@ def run(
         for k in pread_to_contigs:
             pid, rid, oid = k
             for ctg in list(pread_to_contigs[k]):
-                print >>f, '%09d %09d %s %s' % (pid, rid, oid, ctg)
+                print('%09d %09d %s %s' % (pid, rid, oid, ctg), file=f)
 
 
 ######

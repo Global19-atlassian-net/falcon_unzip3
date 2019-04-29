@@ -139,7 +139,7 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
     #########################################################
     fp_proto_log('Writing snp_haplotigs for reproducibility.\n')
     fn_repro_input_snp_haplotigs = os.path.join(out_dir, 'repro.input.snp_haplotigs.json')
-    snp_haplotigs_dict = {key: val.__dict__ for key, val in snp_haplotigs.iteritems()}
+    snp_haplotigs_dict = {key: val.__dict__ for key, val in snp_haplotigs.items()}
     with open(fn_repro_input_snp_haplotigs, 'w') as fp_out_repro:
         fp_out_repro.write(json.dumps(snp_haplotigs_dict))
 
@@ -187,7 +187,7 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
     fp_proto_log('Retupling.')
     for region in all_regions:
         region_type, first_edge, last_edge, pos_start, pos_end, region_htigs = region
-        for htig_name, htig in region_htigs.iteritems():
+        for htig_name, htig in region_htigs.items():
             htig['phase'] = tuple(htig['phase'])
 
     # Assign sequences to all regions.
@@ -197,7 +197,7 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
         # Assigning sequences to the regions. This could have also been stored in the
         # json/msgpack file where the regions are loaded from, the code would be
         # simpler then.
-        for htig_name, htig in region_htigs.iteritems():
+        for htig_name, htig in region_htigs.items():
             htig['seq'] = minced_ctg_seqs[htig_name]
 
     #########################################################
@@ -208,7 +208,7 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
     logger.debug('phase_alias_map = {}'.format(phase_alias_map))
 
     logger.debug('Verbose all regions loaded from regions.json:')
-    for region_id in xrange(len(all_regions)):
+    for region_id in range(len(all_regions)):
         region = all_regions[region_id]
         region_type, first_edge, last_edge, pos_start, pos_end, region_htigs = region
         logger.debug('[region_id = {}] type = {}, first_edge = {}, last_edge = {}, pos_start = {}, pos_end = {}'.format(region_id, region_type, first_edge, last_edge, pos_start, pos_end))
@@ -232,7 +232,7 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
     def excomm(cmd):
         execute.execute_command(cmd, logger)
 
-    if len(snp_haplotigs.keys()) > 0:
+    if snp_haplotigs:
         # BLASR crashes on empty files, so address that.
         p_ctg_fn = os.path.join(proto_dir, 'ref.fa')
         blasr_params = '--minMatch 15 --maxMatch 25 --advanceHalf --advanceExactMatches 10 --bestn 1 --nproc {} --noSplitSubreads'.format(num_threads)
@@ -249,7 +249,7 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
 
     # Debug verbose.
     fp_proto_log('Loaded alignments:')
-    for qname, aln in aln_dict.iteritems():
+    for qname, aln in aln_dict.items():
         fp_proto_log(str(aln))
 
     #########################################################
@@ -313,15 +313,15 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
     #########################################################
     # Debug verbose.
     #########################################################
-    for line in sorted(clippoints.iteritems()):
+    for line in sorted(clippoints.items()):
         logger.debug(' clip_point: {}'.format(line))
 
     logger.debug('Fragmented haplotigs:')
-    for hname, htig in fragmented_snp_haplotigs.iteritems():
+    for hname, htig in fragmented_snp_haplotigs.items():
         logger.debug('  - name = {}, phase = {}, path = {}, len(seq) = {}'.format(htig.name, htig.phase, htig.path, len(htig.seq)))
 
     logger.debug('Verbose the generated diploid regions:')
-    for region_id in xrange(len(final_all_regions)):
+    for region_id in range(len(final_all_regions)):
         region = final_all_regions[region_id]
         region_type, first_edge, last_edge, pos_start, pos_end, region_htigs = region
         logger.debug('[region_id = {}] type = {}, first_edge = {}, last_edge = {}, pos_start = {}, pos_end = {}'.format(region_id, region_type, first_edge, last_edge, pos_start, pos_end))
@@ -357,7 +357,7 @@ def load_haplotigs(hasm_falcon_path, all_flat_rid_to_phase):
     # Process the tiling paths for each assembled haplotig.
     counter = io.Percenter('tiling_paths', len(tiling_paths))
     num_hctg = 0
-    for hctg, hpath in tiling_paths.iteritems():
+    for hctg, hpath in tiling_paths.items():
         num_hctg += 1
 
         # Sanity check. This should not happen, but if it does,
@@ -495,7 +495,7 @@ def reorient_haplotigs(snp_haplotigs, aln_dict, sg_edges, fp_proto_log):
     Changes are made in-place.
     """
     fp_proto_log('Reorienting haplotigs.')
-    for qname, haplotig in snp_haplotigs.iteritems():
+    for qname, haplotig in snp_haplotigs.items():
         if qname not in aln_dict:
             continue
         aln = aln_dict[qname]
@@ -567,7 +567,7 @@ def collect_clippoints(all_regions, snp_haplotig_headers, aln_dict, fp_proto_log
 def fragment_haplotigs(in_haplotigs, aln_dict, clippoints, bubble_tree, fp_proto_log):
     filtered_haplotigs = {}
 
-    for qname, haplotig in in_haplotigs.iteritems():
+    for qname, haplotig in in_haplotigs.items():
         if qname not in aln_dict:
             continue
         aln = aln_dict[qname]
@@ -594,7 +594,7 @@ def fragment_single_haplotig(haplotig, aln, cigar, clippoints, bubble_tree, fp_p
     # For each aligned position, check if it's in the clippoints.
     # If it is, store the position in a new set.
     pos_set = set()
-    for t_pos, q_pos_array in positions.iteritems():
+    for t_pos, q_pos_array in positions.items():
         if t_pos not in clippoints:
             continue
         # Multiple bases could be stacked at the same t_pos,
@@ -649,7 +649,7 @@ def fragment_single_haplotig(haplotig, aln, cigar, clippoints, bubble_tree, fp_p
 
 def filter_haplotigs_by_len(haplotigs_dict, min_query_span, min_target_span, fp_proto_log):
     filtered = {}
-    for htig_name, htig in haplotigs_dict.iteritems():
+    for htig_name, htig in haplotigs_dict.items():
         region_of_interest = htig.labels['region_of_interest']
         start, end, q_name, q_len, t_name, t_len, q_phase = region_of_interest
 
@@ -684,7 +684,7 @@ def create_diploid_regions(fragmented_snp_haplotigs, fp_proto_log):
     ret_diploid_regions = []
 
     groups = {}
-    for qname, haplotig in fragmented_snp_haplotigs.iteritems():
+    for qname, haplotig in fragmented_snp_haplotigs.items():
         phase = haplotig.phase
         start, end, q_name, q_len, t_name, t_len, q_phase = haplotig.labels['region_of_interest']
         tstart, tend = start[0], end[0]
@@ -698,22 +698,22 @@ def create_diploid_regions(fragmented_snp_haplotigs, fp_proto_log):
         groups[region][phase_group].setdefault(phase_id, [])
         groups[region][phase_group][phase_id].append(haplotig)
 
-    for region, phase_group_dict in groups.iteritems():
+    for region, phase_group_dict in groups.items():
         is_valid = True
 
         # Skip any region covered by more than 1 phasing block. Possible repeat.
-        if len(phase_group_dict.keys()) != 1:
+        if len(phase_group_dict) != 1:
             is_valid = False
             continue
 
         # Skip any group which doesn't have exactly 2 phases in it.
         # E.g. one haplotig was larger than the other, due to read length.
-        for phase_group, phase_id_dict in phase_group_dict.iteritems():
-            if len(phase_id_dict.keys()) != 2:
+        for phase_group, phase_id_dict in phase_group_dict.items():
+            if len(phase_id_dict) != 2:
                 is_valid = False
                 break
             # Skip any phase which has more than 1 haplotig covering the region. Possible repeat.
-            for phase_id, haplotigs in phase_id_dict.iteritems():
+            for phase_id, haplotigs in phase_id_dict.items():
                 if len(haplotigs) != 1:
                     is_valid = False
                     break
@@ -732,8 +732,8 @@ def create_diploid_regions(fragmented_snp_haplotigs, fp_proto_log):
 
         # Collect the haplotigs.
         region_htigs = {}
-        for phase_group, phase_id_dict in phase_group_dict.iteritems():
-            for phase_id, haplotigs in phase_id_dict.iteritems():
+        for phase_group, phase_id_dict in phase_group_dict.items():
+            for phase_id, haplotigs in phase_id_dict.items():
                 for haplotig in haplotigs:
                     haplotig.cstart = pos_start
                     haplotig.cend = pos_end
@@ -869,11 +869,11 @@ def regions_to_haplotig_graph(ctg_id, all_regions, fp_proto_log):
 
     # Add nodes.
     fp_proto_log('  - Adding nodes.')
-    for region_id in xrange(len(all_regions)):
+    for region_id in range(len(all_regions)):
         region = all_regions[region_id]
         region_type, edge_start, edge_end, region_pos_start, region_pos_end, region_haplotigs = region
         fp_proto_log('    - region_id = {}, region_type = {}, region_pos_start = {}, region_pos_end = {}'.format(region_id, region_type, region_pos_start, region_pos_end))
-        for key, htig in region_haplotigs.iteritems():
+        for key, htig in region_haplotigs.items():
             if region_type == 'complex' and key.endswith('_base') == False:
                 # Keep the complex regions as collapsed.
                 fp_proto_log('      - [haplotig graph, adding node] key = {} skipped because region_type == "{}" and key does not end in "_base"'.format(key, region_type))
@@ -894,7 +894,7 @@ def regions_to_haplotig_graph(ctg_id, all_regions, fp_proto_log):
         # Connect the first region to the source node.
         region = all_regions[0]
         region_type, edge_start, edge_end, region_pos_start, region_pos_end, region_haplotigs = region
-        for htig_name, htig in region_haplotigs.iteritems():
+        for htig_name, htig in region_haplotigs.items():
             if htig_name not in node_set:
                 continue
             v = source_node_name
@@ -904,7 +904,7 @@ def regions_to_haplotig_graph(ctg_id, all_regions, fp_proto_log):
         # Connect the last region to the sink node.
         region = all_regions[-1]
         region_type, edge_start, edge_end, region_pos_start, region_pos_end, region_haplotigs = region
-        for htig_name, htig in region_haplotigs.iteritems():
+        for htig_name, htig in region_haplotigs.items():
             if htig_name not in node_set:
                 continue
             v = htig_name
@@ -913,12 +913,12 @@ def regions_to_haplotig_graph(ctg_id, all_regions, fp_proto_log):
 
     # Second, add all proper edges.
     fp_proto_log('  - Adding edges.')
-    for region_id in xrange(1, len(all_regions)):
+    for region_id in range(1, len(all_regions)):
         region = all_regions[region_id - 1]
         region_type, edge_start, edge_end, region_pos_start, region_pos_end, region_haplotigs = region
         next_region = all_regions[region_id]
         next_region_type, next_edge_start, next_edge_end, next_region_pos_start, next_region_pos_end, next_region_haplotigs = next_region
-        for htig_name, htig in region_haplotigs.iteritems():
+        for htig_name, htig in region_haplotigs.items():
             v = htig_name
 
             if region_type == 'complex' and v.endswith('_base') == False:
@@ -926,7 +926,7 @@ def regions_to_haplotig_graph(ctg_id, all_regions, fp_proto_log):
                 fp_proto_log('      - [haplotig graph, adding edge] v = {} skipped because region_type == "{}" and key does not end in "_base"'.format(v, region_type))
                 continue
 
-            for next_htig_name, next_htig in next_region_haplotigs.iteritems():
+            for next_htig_name, next_htig in next_region_haplotigs.items():
                 w = next_htig_name
 
                 if next_region_type == 'complex' and w.endswith('_base') == False:
@@ -1265,18 +1265,18 @@ def write_unzipped(out_dir, ctg_id, p_ctg_seqs, p_ctg_edges, h_ctg_seqs, h_ctg_e
     blacklist = set()
 
     # Any sequence of length 0 should not be output.
-    for seq_name, seq in p_ctg_seqs.iteritems():
+    for seq_name, seq in p_ctg_seqs.items():
         if len(seq) == 0:
             fp_proto_log('[write_unzipped] Sequence "{seq_name}" has length zero. Adding to blacklist.'.format(seq_name=seq_name))
             blacklist.add(seq_name)
     # If the length of the edges is 0, something is awry.
     # Rather skip and report, than break execution on the entire assembly.
-    for seq_name, edges in p_ctg_edges.iteritems():
+    for seq_name, edges in p_ctg_edges.items():
         if len(edges) == 0:
             fp_proto_log('[write_unzipped] Sequence "{seq_name}" no edges. Adding to blacklist.'.format(seq_name=seq_name))
             blacklist.add(seq_name)
     # Any haplotig of length 0 should not be written.
-    for seq_name, seq in h_ctg_seqs.iteritems():
+    for seq_name, seq in h_ctg_seqs.items():
         if len(seq) == 0:
             fp_proto_log('[write_unzipped] Sequence "{seq_name}" has length zero. Adding to blacklist.'.format(seq_name=seq_name))
             blacklist.add(seq_name)
@@ -1284,11 +1284,11 @@ def write_unzipped(out_dir, ctg_id, p_ctg_seqs, p_ctg_edges, h_ctg_seqs, h_ctg_e
         if seq_name.split('_')[0] in blacklist:
             fp_proto_log('[write_unzipped] The primary contig of "{seq_name}" is blacklisted. Adding to blacklist.'.format(seq_name=seq_name))
             blacklist.add(seq_name)
-    for seq_name, edges in h_ctg_edges.iteritems():
+    for seq_name, edges in h_ctg_edges.items():
         if len(edges) == 0:
             fp_proto_log('[write_unzipped] Sequence "{seq_name}" no edges. Adding to blacklist.'.format(seq_name=seq_name))
             blacklist.add(seq_name)
-    for seq_name, paf in h_ctg_paf.iteritems():
+    for seq_name, paf in h_ctg_paf.items():
         if len(paf) == 0:
             fp_proto_log('[write_unzipped] Sequence "{seq_name}" has no placement. This is not critical and will not be added to blacklist, but worth noting.'.format(seq_name=seq_name))
             # blacklist.add(seq_name)
@@ -1423,7 +1423,7 @@ def define_globals(args):
     # Hash the lengths of the primary contig sequences.
     # Needed to correctly assign node coords when loading tiling paths
     p_ctg_seq_lens = {}
-    for p_ctg_id, ctg_seq in p_ctg_seqs.iteritems():
+    for p_ctg_id, ctg_seq in p_ctg_seqs.items():
         p_ctg_seq_lens[p_ctg_id] = len(ctg_seq)
     # Load the tiling path of the primary contig, and assign coordinants to nodes.
     p_ctg_tiling_paths = tiling_path.load_tiling_paths(os.path.join(fc_asm_path, "p_ctg_tiling_path"), contig_lens=p_ctg_seq_lens, whitelist_seqs=None)
@@ -1524,7 +1524,7 @@ def cmd_split(args):
 
     define_globals(args)
 
-    ctg_id_list = p_asm_G.ctg_data.keys()
+    ctg_id_list = list(p_asm_G.ctg_data.keys())
 
     LOG.info('Creating units-of-work for ctg_id_list (though many will be skipped): {}'.format(ctg_id_list))
 

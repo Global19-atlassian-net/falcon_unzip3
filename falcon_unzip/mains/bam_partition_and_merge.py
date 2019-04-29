@@ -51,7 +51,7 @@ def partition_ctgs(read2ctg, max_n_groups):
     log(' Counting reads per ctg')
     ctg2count = collections.defaultdict(int)
     n_reads = 0
-    for read, ctg in read2ctg.iteritems():
+    for read, ctg in read2ctg.items():
         ctg2count[ctg] += 1
         n_reads += 1
     log(' {} ctgs, {} reads, => approx. {:.1f} reads per ctg'.format(
@@ -88,12 +88,12 @@ def partition_ctgs(read2ctg, max_n_groups):
             groups.reverse()
             for group in groups:
                 yield group
-    next_group = yield_groups().next  # to walk back and forth through list
+    groupsit = yield_groups()  # iterator to walk back and forth through list
 
     while countedctgs:
         # Select biggest remaining ctg (i.e. highest read-count).
         count, ctg = countedctgs.pop()
-        group = next_group()
+        group = next(groupsit)
         group.add(ctg)
 
     # log groups counts
@@ -231,14 +231,14 @@ def write_read2ctg_subsets(read2ctg, ctg2samfn):
     """
     log(" Invert ctg2samfn")
     samfn2ctgs = collections.defaultdict(set)
-    for ctg, samfn in ctg2samfn.iteritems():
+    for ctg, samfn in ctg2samfn.items():
         samfn2ctgs[samfn].add(ctg)
     log(" Invert read2ctg")
     ctg2reads = collections.defaultdict(set)
-    for read, ctg in read2ctg.iteritems():
+    for read, ctg in read2ctg.items():
         ctg2reads[ctg].add(read)
     log(" Write read2ctg subset for each samfn")
-    for samfn, ctgs in samfn2ctgs.iteritems():
+    for samfn, ctgs in samfn2ctgs.items():
         read2ctg_subset = dict()
         for ctg in ctgs:
             reads = ctg2reads[ctg]
@@ -295,7 +295,7 @@ def run(extra_subreads, input_bam_fofn, read2ctg_fn, merged_fn, max_n_open_files
         close_sam_writers(samfn2writer.values())
     log('Finished partitioning BAM.')
     with open(merged_fn, 'w') as ofs:
-        for samfn in samfn2writer.iterkeys():
+        for samfn in samfn2writer.keys():
             ofs.write(samfn + '\n')
     log('Wrote {!r}'.format(merged_fn))
 

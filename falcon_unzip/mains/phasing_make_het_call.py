@@ -51,8 +51,8 @@ def make_het_call_map(ref_seq, samtools_view_bam_ctg_f, vmap_f, vpos_f):
     #q_id = 0
     cigar_re = re.compile(r"(\d+)([MIDNSHP=X])")
 
-    print >> vmap_f, '#POS\tREFB\tB0|1\tqid'
-    print >> vpos_f, '#POS\tREFB\ttotal\t(B N)*'
+    print('#POS\tREFB\tB0|1\tqid', file=vmap_f)
+    print('#POS\tREFB\ttotal\t(B N)*', file=vpos_f)
 
     for l in samtools_view_bam_ctg_f:
         l = l.strip().split()
@@ -112,7 +112,7 @@ def make_het_call_map(ref_seq, samtools_view_bam_ctg_f, vmap_f, vpos_f):
                 for i in range(adv):
                     rp += 1
 
-        pos_k = pileup.keys()
+        pos_k = list(pileup.keys())
         pos_k.sort()
         th = 0.25
         for pos in pos_k:
@@ -139,19 +139,19 @@ def make_het_call_map(ref_seq, samtools_view_bam_ctg_f, vmap_f, vpos_f):
                 b0 = base_count[0][1]
                 b1 = base_count[1][1]
                 ref_base = ref_seq[pos]
-                print >> vpos_f, '{}\t{}\t{}\t{}'.format(
+                print('{}\t{}\t{}\t{}'.format(
                     pos + 1, ref_base, total_count,
-                    " ".join(["%s %d" % (x[1], x[0]) for x in base_count]))
+                    " ".join(["%s %d" % (x[1], x[0]) for x in base_count])), file=vpos_f)
                 for q_id_ in sorted(pupmap[b0]):
-                    print >> vmap_f, '{}\t{}\t{}\t{}'.format(
-                        pos + 1, ref_base, b0, q_id_)
+                    print('{}\t{}\t{}\t{}'.format(
+                        pos + 1, ref_base, b0, q_id_), file=vmap_f)
                 for q_id_ in sorted(pupmap[b1]):
-                    print >> vmap_f, '{}\t{}\t{}\t{}'.format(
-                        pos + 1, ref_base, b1, q_id_)
+                    print('{}\t{}\t{}\t{}'.format(
+                        pos + 1, ref_base, b1, q_id_), file=vmap_f)
     # We do not serialize variant_pos/map because those are streamed.
     # But we can add end-of-file markers.
-    print >> vmap_f, '#EOF'
-    print >> vpos_f, '#EOF'
+    print('#EOF', file=vmap_f)
+    print('#EOF', file=vpos_f)
 
     return q_id_map
 

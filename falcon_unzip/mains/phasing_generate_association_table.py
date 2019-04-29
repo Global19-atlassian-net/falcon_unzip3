@@ -27,9 +27,9 @@ def generate_association_table(vmap_fn, atable_fn, ctg_id):
     #xary = []
     #yary = []
     with open(atable_fn, "w") as out_f:
-        for i1 in xrange(len(v_positions)):
+        for i1 in range(len(v_positions)):
             link_count = 0
-            for i2 in xrange(i1 + 1, len(v_positions)):
+            for i2 in range(i1 + 1, len(v_positions)):
                 pos1, rb1 = v_positions[i1]
                 pos2, rb2 = v_positions[i2]
                 if pos2 - pos1 > (1 << 16):
@@ -38,14 +38,14 @@ def generate_association_table(vmap_fn, atable_fn, ctg_id):
                 p1table = []
                 p2table = []
                 s1 = 0
-                list1 = vmap[(pos1, rb1)].items()
+                list1 = list(vmap[(pos1, rb1)].items())
                 assert len(list1) == 2, 'len={}'.format(len(list1))
                 for b1, qids1 in list1:
                     p1table.append((b1, len(qids1)))
                     s1 += len(qids1)
 
                 s2 = 0
-                list2 = vmap[(pos2, rb2)].items()
+                list2 = list(vmap[(pos2, rb2)].items())
                 assert len(list2) == 2, 'len={}'.format(len(list2))
                 for b2, qids2 in list2:
                     p2table.append((b2, len(qids2)))
@@ -64,8 +64,8 @@ def generate_association_table(vmap_fn, atable_fn, ctg_id):
                 b12 = p1table[1][0]
                 b21 = p2table[0][0]
                 b22 = p2table[1][0]
-                print >> out_f, pos1, b11, b12, pos2, b21, b22, ct[(
-                    b11, b21)], ct[(b11, b22)], ct[(b12, b21)], ct[(b12, b22)]
+                print(pos1, b11, b12, pos2, b21, b22, ct[(
+                    b11, b21)], ct[(b11, b22)], ct[(b12, b21)], ct[(b12, b22)], file=out_f)
 
                 # xary.append(pos1)
                 # yary.append(pos2)

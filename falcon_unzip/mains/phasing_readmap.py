@@ -1,4 +1,4 @@
-from __future__ import division
+
 import os
 import re
 
@@ -35,7 +35,7 @@ def run(out_stream, phased_reads, rawread_ids_fn, pread_ids_fn, pread_to_contigs
             arid_to_phase['%09d' % int(row[0])] = phase
 
     for arid, phase in arid_to_phase.items():
-        print >>out_stream, arid, the_ctg_id, phase[0], phase[1]
+        print(arid, the_ctg_id, phase[0], phase[1], file=out_stream)
 
 
 ######

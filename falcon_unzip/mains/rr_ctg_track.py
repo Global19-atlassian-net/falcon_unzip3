@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from falcon_kit.multiproc import Pool
 import falcon_kit.util.io as io
 import argparse
@@ -102,7 +102,7 @@ def run_track_reads(
                     ctg_score[ctg][1] += 1
 
             #oid = rid_to_oid[int(bread)]
-            ctg_score = ctg_score.items()
+            ctg_score = list(ctg_score.items())
             ctg_score.sort(key=lambda k: k[1][0])
             rank = 0
 

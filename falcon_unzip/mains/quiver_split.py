@@ -62,8 +62,8 @@ def run(p_ctg_fasta_fn, h_ctg_fasta_fn, ctg2bamfn_fn, split_fn, bash_template_fn
             #   See https://github.com/PacificBiosciences/FALCON_unzip/issues/59
             sequence = ref_seq_data[ctg_id]
             with open(ref_fasta, 'w') as f:
-                print >>f, '>' + ctg_id
-                print >>f, sequence
+                print('>' + ctg_id, file=f)
+                print(sequence, file=f)
         ctg_type_fn = os.path.join('./refs', ctg_id, 'ctg_type')
         with open(ctg_type_fn, 'w') as ofs:
             ofs.write(ctg_type) # just a letter

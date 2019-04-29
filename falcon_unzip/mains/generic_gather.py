@@ -16,7 +16,7 @@ def run(gathered_fn, scattered_fn):
         job_output = dict()
         #job_output['wildcards'] = dict()
         fn_dict = dict(job['output'])
-        for key in fn_dict.keys():
+        for key in list(fn_dict.keys()):
             # Fix path to be relative to gathered_fn.
             fn = fn_dict[key]
             if not os.path.isabs(fn):

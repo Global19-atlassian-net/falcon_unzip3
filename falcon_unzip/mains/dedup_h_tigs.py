@@ -69,13 +69,13 @@ def run(ctg_id):
                                 same_phase_to_p_ctg_count += h_ctg_to_phase[r.name][(b_id, ph_id)]
                     unphased_edge_count = h_ctg_to_phase[r.name] .get((-1, 0), 0)
 
-                    print r.name, edge_count, unphased_edge_count, same_phase_to_p_ctg_count
+                    print(r.name, edge_count, unphased_edge_count, same_phase_to_p_ctg_count)
                     if edge_count - unphased_edge_count - same_phase_to_p_ctg_count < 5:  # there are many non-p_ctg phase segment, do not filter out
                         continue
 
-                print >>f, ">" + r.name
-                print >>f, r.sequence
-                print >> h_ids, r.name
+                print(">" + r.name, file=f)
+                print(r.sequence, file=f)
+                print(r.name, file=h_ids)
 
 
 ######

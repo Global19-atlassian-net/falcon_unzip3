@@ -49,7 +49,7 @@ def select_reads_from_bam(input_bam_fofn_fn, rawread_to_contigs_fn, rawread_ids_
     #outfile = AlignmentFile( os.path.join(base_dir, 'header.sam' ), 'wh', header=header )
     # outfile.close()
 
-    ctgs = read_partition.keys()
+    ctgs = list(read_partition.keys())
     ctgs.sort()
     selected_ctgs = set()
     for ctg in ctgs:
