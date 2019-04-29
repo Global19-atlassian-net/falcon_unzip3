@@ -1,6 +1,6 @@
 import pytest
 import falcon_unzip.mains.bam_partition_and_merge as M
-import StringIO
+import io
 import collections
 import logging
 import os

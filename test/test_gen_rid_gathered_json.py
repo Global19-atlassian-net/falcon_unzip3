@@ -12,5 +12,5 @@ bar
     M.dump(sin, sout)
 
     got = json.loads(sout.getvalue())
-    expected = [{u'rid_to_phase_out': u'foo'}, {u'rid_to_phase_out': u'bar'}]
+    expected = [{'rid_to_phase_out': 'foo'}, {'rid_to_phase_out': 'bar'}]
     assert got == expected

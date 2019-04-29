@@ -80,11 +80,11 @@ def evaluate_update_haplotig_graph(test_haplotig_graph, expected_nodes, expected
 
 def evaluate_write_unzipped(tmpdir, expected):
     # Check the number of generated files.
-    assert len(tmpdir.listdir()) == len(expected.keys())
+    assert len(tmpdir.listdir()) == len(list(expected.keys()))
 
     # Compare generated files with expectations.
     fns = {os.path.basename(str(val)):str(val) for val in tmpdir.listdir()}
-    for fn, expected_val in expected.iteritems():
+    for fn, expected_val in expected.items():
         # Check if the file actually exists.
         assert fn in fns
         # Load the data and compare.
@@ -1009,7 +1009,7 @@ def test_find_haplotig_placement_1():
     inputs, expected = create_test()
 
     # Test multiple haplotigs.
-    for h_ctg_id, vals in inputs.iteritems():
+    for h_ctg_id, vals in inputs.items():
         # Run the unit under test.
         result = mod.find_haplotig_placement(*vals)
 
@@ -1073,7 +1073,7 @@ def test_find_haplotig_placement_2():
     inputs, expected = create_test()
 
     # Test multiple haplotigs.
-    for h_ctg_id, vals in inputs.iteritems():
+    for h_ctg_id, vals in inputs.items():
         # Run the unit under test.
         with pytest.raises(Exception, match=expected[h_ctg_id]):
             result = mod.find_haplotig_placement(*vals)
@@ -2169,7 +2169,7 @@ def test_fragment_single_haplotig_1():
         # Evaluate.
         assert set(result.keys()) == set(expected.keys())
 
-        for key, result_htig in result.iteritems():
+        for key, result_htig in result.items():
             assert result_htig.__dict__ == expected[key].__dict__, key
 
 def test_filter_haplotigs_by_len():
@@ -2394,6 +2394,6 @@ def test_filter_haplotigs_by_len():
         msg = 'test_id = {}'.format(test_id)
         assert set(result.keys()) == set(expected.keys()), msg
 
-        for key, result_htig in result.iteritems():
+        for key, result_htig in result.items():
             msg = 'test_id = {}, key = {}'.format(test_id, key)
             assert result_htig.__dict__ == expected[key].__dict__, msg

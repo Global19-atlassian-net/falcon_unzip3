@@ -1,5 +1,5 @@
 #import falcon_unzip.phasing as M
-import StringIO
+import io
 import collections
 import os
 
