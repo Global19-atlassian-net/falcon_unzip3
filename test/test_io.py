@@ -1,7 +1,6 @@
 from io import StringIO
 import os
 import pytest
-import subprocess
 import falcon_unzip.io as M
 
 import logging

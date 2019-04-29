@@ -1,5 +1,5 @@
 from multiprocessing import Pool
-import subprocess as sp
+import subprocess
 import shlex
 import os
 import re
@@ -40,7 +40,7 @@ def filter_stage1(input_):
         overlap_phase = {"5p": set(), "3p": set()}
         q_id = None
 
-        for l in sp.check_output(shlex.split("LA4Falcon -mo %s %s" % (db_fn, fn))).splitlines():
+        for l in subprocess.check_output(shlex.split("LA4Falcon -mo %s %s" % (db_fn, fn)), encoding='ascii').splitlines():
             l = l.strip().split()
             q_id, t_id = l[:2]
 
@@ -147,7 +147,7 @@ def filter_stage2(input_):
     db_fn, fn, max_diff, max_ovlp, min_ovlp, min_len, ignore_set = input_
     try:
         contained_id = set()
-        for l in sp.check_output(shlex.split("LA4Falcon -mo %s %s" % (db_fn, fn))).splitlines():
+        for l in subprocess.check_output(shlex.split("LA4Falcon -mo %s %s" % (db_fn, fn)), encoding='ascii').splitlines():
             l = l.strip().split()
             q_id, t_id = l[:2]
 
@@ -204,7 +204,7 @@ def filter_stage3(input_):
     try:
         ovlp_output = []
         current_q_id = None
-        for l in sp.check_output(shlex.split("LA4Falcon -mo %s %s" % (db_fn, fn))).splitlines():
+        for l in subprocess.check_output(shlex.split("LA4Falcon -mo %s %s" % (db_fn, fn)), encoding='ascii').splitlines():
             l = l.strip().split()
             q_id, t_id = l[:2]
 

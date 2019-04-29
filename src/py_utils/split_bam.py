@@ -10,7 +10,7 @@ with open("phased_reads") as f:
         phase = l[1] + "_" + l[2]
         read_to_phase[rid] = phase
 
-p = subprocess.Popen(shlex.split("samtools view -h 000207F.000207F000207F.bam"), stdout=subprocess.PIPE)
+p = subprocess.Popen(shlex.split("samtools view -h 000207F.000207F000207F.bam"), stdout=subprocess.PIPE, encoding='ascii')
 
 phase_to_file = {}
 header = []

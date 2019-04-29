@@ -17,7 +17,7 @@ install_requires = [
 
 try:
     local_version = '+git.{}'.format(
-        subprocess.check_output('git rev-parse HEAD', shell=True))
+        subprocess.check_output('git rev-parse HEAD', shell=True, encoding='ascii'))
 except Exception:
     local_version = ''
 

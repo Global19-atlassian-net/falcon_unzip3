@@ -21,7 +21,7 @@ def execute_command(command, logger, dry_run=False):
       logger.info('')
       return 0
   log('Executing "{}"'.format(command), logger)
-  rc = subprocess.call(command, shell=True)
+  rc = subprocess.call(command, shell=True, encoding='ascii')
   if (rc != 0):
       msg = ' subprocess call returned error code: {}.'.format(rc)
       log(msg, logger)
@@ -39,7 +39,7 @@ def execute_command_with_ret(command, logger, dry_run=False):
   log('Executing "{}" (dryrun={}).'.format(command, dry_run), logger)
   if dry_run:
     return [0, '', '']
-  p = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE,
+  p = subprocess.Popen(command, shell=True, encoding='ascii', stdin=subprocess.PIPE,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   [output, err] = p.communicate()
   rc = p.returncode

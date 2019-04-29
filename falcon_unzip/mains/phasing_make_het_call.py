@@ -25,7 +25,7 @@ def make_het_call(bam_fn, fasta_fn, vmap_fn, vpos_fn, q_id_map_fn, ctg_id):
 
     cmd = "samtools view %s %s" % (bam_fn, ctg_id)
     LOG.info('Capture `{}`'.format(cmd))
-    p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE)
+    p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, encoding='ascii')
 
     with open(vmap_fn, "w") as vmap_f, open(vpos_fn, "w") as vpos_f:
         q_id_map = make_het_call_map(ref_seq, p.stdout, vmap_f, vpos_f)

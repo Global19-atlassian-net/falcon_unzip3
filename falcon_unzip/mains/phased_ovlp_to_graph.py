@@ -1,7 +1,6 @@
 import networkx as nx
 import os
 import shlex
-import subprocess
 
 DEBUG_LOG_LEVEL = 0
 
