@@ -16,10 +16,10 @@ nproc={params.pypeflow_nproc}
 ncore=$(expr $(expr $(expr $nproc - 1 ) / 2) + 1)
 
 # Also require read_to_contig_map.
-python -m falcon_unzip.mains.rr_ctg_track --n-core=$ncore --db={input.r_db} --las-fofn={input.r_las_fofn} --output={output.rawread_to_contigs}
-python -m falcon_unzip.mains.pr_ctg_track --n-core=$ncore --db={input.p_db} --las-fofn={input.p_las_fofn} --output={output.pread_to_contigs}
+python3 -m falcon_unzip.mains.rr_ctg_track --n-core=$ncore --db={input.r_db} --las-fofn={input.r_las_fofn} --output={output.rawread_to_contigs}
+python3 -m falcon_unzip.mains.pr_ctg_track --n-core=$ncore --db={input.p_db} --las-fofn={input.p_las_fofn} --output={output.pread_to_contigs}
 # Those outputs are used only by fetch_reads.
-python -m falcon_unzip.mains.fetch_reads --p-ctg={input.p_ctg} --fofn={input.fofn} --ctg-list={output.ctg_list_file}
+python3 -m falcon_unzip.mains.fetch_reads --p-ctg={input.p_ctg} --fofn={input.fofn} --ctg-list={output.ctg_list_file}
 touch {output.job_done}
 """
 # TODO: Proper scattering (currently in fetch_reads.py)
@@ -51,26 +51,26 @@ vmap_fn='het_call/variant_map'
 vpos_fn='het_call/variant_pos'
 q_id_map_fn='het_call/q_id_map.msgpack'
 mkdir -p het_call
-python -m falcon_unzip.mains.phasing_make_het_call --bam ${{bam_fn}} --fasta ${{fasta_fn}} --ctg-id {params.ctg_id} --vmap=${{vmap_fn}} --vpos=${{vpos_fn}} --q-id-map=${{q_id_map_fn}}
+python3 -m falcon_unzip.mains.phasing_make_het_call --bam ${{bam_fn}} --fasta ${{fasta_fn}} --ctg-id {params.ctg_id} --vmap=${{vmap_fn}} --vpos=${{vpos_fn}} --q-id-map=${{q_id_map_fn}}
 
 # GENERATE ASSOCIATION TABLE
 atable_fn='g_atable/atable'
 mkdir -p g_atable
-python -m falcon_unzip.mains.phasing_generate_association_table --ctg-id {params.ctg_id} --vmap=${{vmap_fn}} --atable=${{atable_fn}}
+python3 -m falcon_unzip.mains.phasing_generate_association_table --ctg-id {params.ctg_id} --vmap=${{vmap_fn}} --atable=${{atable_fn}}
 
 # GET PHASED BLOCKS
 phased_variant_fn='get_phased_blocks/phased_variants'
 mkdir -p get_phased_blocks
-python -m falcon_unzip.mains.phasing_get_phased_blocks --vmap=${{vmap_fn}} --atable=${{atable_fn}} --p-variant=${{phased_variant_fn}}
+python3 -m falcon_unzip.mains.phasing_get_phased_blocks --vmap=${{vmap_fn}} --atable=${{atable_fn}} --p-variant=${{phased_variant_fn}}
 
 # GET PHASED READS
 phased_reads_fn='get_phased_reads/phased_reads'
 mkdir -p get_phased_reads
-python -m falcon_unzip.mains.phasing_get_phased_reads --ctg-id={params.ctg_id} --vmap=${{vmap_fn}} --p-variant=${{phased_variant_fn}} --q-id-map=${{q_id_map_fn}} --phased-reads=${{phased_reads_fn}}
+python3 -m falcon_unzip.mains.phasing_get_phased_reads --ctg-id={params.ctg_id} --vmap=${{vmap_fn}} --p-variant=${{phased_variant_fn}} --q-id-map=${{q_id_map_fn}} --phased-reads=${{phased_reads_fn}}
 
 # PHASING READMAP
 # TODO: read-map-dir/* as inputs
-python -m falcon_unzip.mains.phasing_readmap --the-ctg-id={params.ctg_id} --rawread-ids-fn={input.rawread_ids} --pread-ids-fn={input.pread_ids} --pread-to-contigs={input.pread_to_contigs} --phased-reads=${{phased_reads_fn}} >| {output.rid_to_phase_out}.tmp
+python3 -m falcon_unzip.mains.phasing_readmap --the-ctg-id={params.ctg_id} --rawread-ids-fn={input.rawread_ids} --pread-ids-fn={input.pread_ids} --pread-to-contigs={input.pread_to_contigs} --phased-reads=${{phased_reads_fn}} >| {output.rid_to_phase_out}.tmp
 mv {output.rid_to_phase_out}.tmp {output.rid_to_phase_out}.true
 
 mkdir -p proto
@@ -78,7 +78,7 @@ preads_ovl_dir="{params.base_dir}/1-preads_ovl"
 falcon_asm_dir="{params.base_dir}/2-asm-falcon"
 unzip_dir="{params.base_dir}/3-unzip"
 
-python -m falcon_unzip.proto.extract_phased_preads \
+python3 -m falcon_unzip.proto.extract_phased_preads \
     --ctg-id {params.ctg_id} \
     --preads ${{preads_ovl_dir}}/db2falcon/preads4falcon.fasta \
     --rid-phase-map {output.rid_to_phase_out}.true \
@@ -87,7 +87,7 @@ python -m falcon_unzip.proto.extract_phased_preads \
 ln -sf {input.ref_fasta} proto/ref.fa
 time minimap2 -a -x map-pb -t ${{threads_aln}} proto/ref.fa proto/preads.fasta > proto/preads.sam
 
-python -m falcon_unzip.proto.main_augment_pb \
+python3 -m falcon_unzip.proto.main_augment_pb \
     --wd ./proto/ \
     --ctg-id {params.ctg_id} \
     --p-ctg ${{falcon_asm_dir}}/p_ctg.fa \
@@ -104,19 +104,19 @@ mv {output.rid_to_phase_out}.tmp {output.rid_to_phase_out}
 """
 
 TASK_PHASING_SPLIT_SCRIPT = """\
-python -m falcon_unzip.mains.phasing_split --base-dir={params.topdir} --ctg-list-fn={input.ctg_list} --rawread-ids-fn={input.rawread_ids} --pread-ids-fn={input.pread_ids} --pread-to-contigs-fn={input.pread_to_contigs} --split-fn={output.split} --bash-template-fn={output.bash_template}
+python3 -m falcon_unzip.mains.phasing_split --base-dir={params.topdir} --ctg-list-fn={input.ctg_list} --rawread-ids-fn={input.rawread_ids} --pread-ids-fn={input.pread_ids} --pread-to-contigs-fn={input.pread_to_contigs} --split-fn={output.split} --bash-template-fn={output.bash_template}
 """
 
 TASK_PHASING_GATHER_SCRIPT = """\
-python -m falcon_unzip.mains.phasing_gather --gathered={input.gathered} --rid-to-phase-all={output.rid_to_phase_all}
+python3 -m falcon_unzip.mains.phasing_gather --gathered={input.gathered} --rid-to-phase-all={output.rid_to_phase_all}
 """
 
 TASK_HASM_SCRIPT = """\
 # TODO: Needs preads.db
 
 rm -f ./ctg_paths
-python -m falcon_unzip.mains.ovlp_filter_with_phase_strict --fofn {input.las_fofn} --max-diff 120 --max-cov 120 --min-cov 1 --n-core 48 --min-len 2500 --db {input.preads_db} --rid-phase-map {input.rid_to_phase_all} > preads.p_ovl
-python -m falcon_unzip.mains.phased_ovlp_to_graph preads.p_ovl --min-len 2500 > fc.log
+python3 -m falcon_unzip.mains.ovlp_filter_with_phase_strict --fofn {input.las_fofn} --max-diff 120 --max-cov 120 --min-cov 1 --n-core 48 --min-len 2500 --db {input.preads_db} --rid-phase-map {input.rid_to_phase_all} > preads.p_ovl
+python3 -m falcon_unzip.mains.phased_ovlp_to_graph preads.p_ovl --min-len 2500 > fc.log
 
 if [[ ! -e ./ctg_paths ]]; then
     exit 1
@@ -133,7 +133,7 @@ rm -f {output.p_ctg}
 # Given sg_edges_list, utg_data, ctg_paths, preads4falcon.fasta,
 # write p_ctg.fa and a_ctg_all.fa,
 # plus p_ctg_tiling_path, a_ctg_tiling_path:
-time python -m falcon_kit.mains.graph_to_contig
+time python3 -m falcon_kit.mains.graph_to_contig
 
 if [[ ! -e {output.p_ctg} ]]; then
     exit 1
@@ -146,7 +146,7 @@ hasm_dir=$(dirname {input.p_ctg})
 
 # TODO: Should we look at ../reads/ctg_list ?
 
-python -m falcon_unzip.mains.graphs_to_h_tigs_2 split --gathered-rid-to-phase={input.gathered_rid_to_phase} --base-dir={params.topdir} --fc-asm-path ${{asm_dir}} --fc-hasm-path ${{hasm_dir}} --rid-phase-map {input.rid_to_phase_all} --fasta {input.preads4falcon} --split-fn={output.split} --bash-template-fn={output.bash_template}
+python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 split --gathered-rid-to-phase={input.gathered_rid_to_phase} --base-dir={params.topdir} --fc-asm-path ${{asm_dir}} --fc-hasm-path ${{hasm_dir}} --rid-phase-map {input.rid_to_phase_all} --fasta {input.preads4falcon} --split-fn={output.split} --bash-template-fn={output.bash_template}
 
 # The bash-template is just a dummy, for now.
 """
@@ -155,12 +155,12 @@ TASK_GRAPH_TO_H_TIGS_SCRIPT = """\
 asm_dir=$(dirname {input.falcon_asm_done})
 hasm_dir=$(dirname {input.p_ctg})
 
-python -m falcon_unzip.mains.graphs_to_h_tigs_2 --gathered-rid-to-phase={input.gathered_rid_to_phase} --base-dir={params.topdir} --fc-asm-path ${{asm_dir}} --fc-hasm-path ${{hasm_dir}} --ctg-id all --rid-phase-map {input.rid_to_phase_all} --fasta {input.preads4falcon}
+python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 --gathered-rid-to-phase={input.gathered_rid_to_phase} --base-dir={params.topdir} --fc-asm-path ${{asm_dir}} --fc-hasm-path ${{hasm_dir}} --ctg-id all --rid-phase-map {input.rid_to_phase_all} --fasta {input.preads4falcon}
 
 # more script -- a little bit hacky here, we should improve
 
 #WD=$PWD
-# for f in `cat ../reads/ctg_list `; do mkdir -p $WD/$f; cd $WD/$f; python -m falcon_unzip.mains.dedup_h_tigs $f; done
+# for f in `cat ../reads/ctg_list `; do mkdir -p $WD/$f; cd $WD/$f; python3 -m falcon_unzip.mains.dedup_h_tigs $f; done
 
 for f in `cat ../reads/ctg_list `
 do
@@ -182,7 +182,7 @@ TASK_HASM_COLLECT_SCRIPT = """\
 ## (assume we are in 3-unzip/somewhere/)
 
 # TODO: Stop using job_done.
-python -m falcon_unzip.mains.graphs_to_h_tigs_2 combine --results-fn={input.results} --done-fn={output.job_done}
+python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 combine --results-fn={input.results} --done-fn={output.job_done}
 
 find ./0-phasing -name "phased_reads" | sort | xargs cat >| all_phased_reads
 #find ./2-htigs -name "h_ctg_ids.*" | sort | xargs cat >| all_h_ctg_ids
@@ -197,15 +197,15 @@ if [[ ! -s all_p_ctg.fa ]]; then
 fi
 
 # # Generate a GFA for only primary contigs and haplotigs.
-# time python -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} >| ./asm.gfa
+# time python3 -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} >| ./asm.gfa
 
 # # Generate a GFA of all assembly graph edges. This GFA can contain
 # # edges and nodes which are not part of primary contigs and haplotigs
-# time python -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} --add-string-graph >| ./sg.gfa
+# time python3 -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} --add-string-graph >| ./sg.gfa
 """
 
 TASK_TRACK_READS_H_SCRIPT = """\
-python -m falcon_unzip.mains.get_read_hctg_map --base-dir={params.topdir} --output=./read_to_contig_map
+python3 -m falcon_unzip.mains.get_read_hctg_map --base-dir={params.topdir} --output=./read_to_contig_map
 
 fc_rr_hctg_track.py --stream  --db={input.r_db} --las-fofn={input.r_las_fofn} --phased-reads={input.all_phased_reads} --rawread-ids={input.rawread_ids} --read-to-contig-map=./read_to_contig_map --partials-fn=./partials.json
 # That writes a msgpack partial for each raw_reads.*.las file.
@@ -220,7 +220,7 @@ fc_rr_hctg_track2.exe --read-to-contig-map=${{cwd}}/read_to_contig_map --output=
 cd -
 
 # Clean up.
-python -m falcon_unzip.mains.remove_all --fofn=./partials.json
+python3 -m falcon_unzip.mains.remove_all --fofn=./partials.json
 
 ls -l {output.rawread_to_contigs}
 """
@@ -228,7 +228,7 @@ ls -l {output.rawread_to_contigs}
 
 # For now, in/outputs are in various directories, by convention.
 TASK_SELECT_READS_H_SCRIPT = """\
-python -m falcon_unzip.mains.get_read2ctg --rawread-to-contigs={input.rawread_to_contigs} --output={output.read2ctg} {input.input_bam_fofn}
+python3 -m falcon_unzip.mains.get_read2ctg --rawread-to-contigs={input.rawread_to_contigs} --output={output.read2ctg} {input.input_bam_fofn}
 # I think this should be memory-constrained. Only 1 proc.
 """
 
@@ -241,14 +241,14 @@ abs_input_read2ctg=$(readlink -f {input.read2ctg})
 cd {params.topdir}
 pwd
 #fc_select_reads_from_bam.py --max-n-open-files={params.max_n_open_files} ${{abs_input_input_bam_fofn}}
-python -m falcon_unzip.mains.bam_partition_and_merge --extra={params.extra} --max-n-open-files={params.max_n_open_files} --read2ctg-fn=${{abs_input_read2ctg}} --merged-fn=${{abs_output_merged_fofn}} ${{abs_input_input_bam_fofn}}
+python3 -m falcon_unzip.mains.bam_partition_and_merge --extra={params.extra} --max-n-open-files={params.max_n_open_files} --read2ctg-fn=${{abs_input_read2ctg}} --merged-fn=${{abs_output_merged_fofn}} ${{abs_input_input_bam_fofn}}
 # I think this should be memory-constrained. Only 1 proc, I think.
 cd -
 ls -l {output.merged_fofn}
 """
 
 TASK_MAP_SEGREGATED_BAM_SCRIPT = """
-python -m falcon_unzip.mains.bam_segregate_gather --gathered-fn={input.gathered} --ctg2segregated-bamfn-fn={output.ctg2segregated_bamfn}
+python3 -m falcon_unzip.mains.bam_segregate_gather --gathered-fn={input.gathered} --ctg2segregated-bamfn-fn={output.ctg2segregated_bamfn}
 """
 
 TASK_QUIVER_RUN_SCRIPT = """\
@@ -275,7 +275,7 @@ else
             {input.read_bam} {input.ref_fasta} aln-{params.ctg_id}.bam
 fi
 
-#python -c 'import ConsensusCore2 as cc2; print cc2' # So quiver likely works.
+#python3 -c 'import ConsensusCore2 as cc2; print cc2' # So quiver likely works.
 
 fasta_gz={output.cns_fasta}
 fastq_gz={output.cns_fastq}
@@ -306,7 +306,7 @@ touch {output.job_done}
 """
 
 TASK_CNS_ZCAT_SCRIPT = """\
-python -m falcon_unzip.mains.cns_zcat \
+python3 -m falcon_unzip.mains.cns_zcat \
     --gathered-quiver-fn={input.gathered_quiver} \
     --cns-p-ctg-fasta-fn={output.cns_p_ctg_fasta} \
     --cns-p-ctg-fastq-fn={output.cns_p_ctg_fastq} \
@@ -317,19 +317,19 @@ touch {output.job_done}
 """
 
 TASK_QUIVER_SPLIT_SCRIPT = """\
-python -m falcon_unzip.mains.quiver_split --unzip-config-fn={input.unzip_config_fn} --p-ctg-fasta-fn={input.p_ctg_fa} --h-ctg-fasta-fn={input.h_ctg_fa} --ctg2bamfn-fn={input.ctg2bamfn} --split-fn={output.split} --bash-template-fn={output.bash_template}
+python3 -m falcon_unzip.mains.quiver_split --unzip-config-fn={input.unzip_config_fn} --p-ctg-fasta-fn={input.p_ctg_fa} --h-ctg-fasta-fn={input.h_ctg_fa} --ctg2bamfn-fn={input.ctg2bamfn} --split-fn={output.split} --bash-template-fn={output.bash_template}
 """
 
 TASK_SEPARATE_GATHERED_QUIVER_SCRIPT = """\
-python -m falcon_unzip.mains.quiver_separate_gathered --gathered-fn={input.gathered} --output-fn={output.separated}
+python3 -m falcon_unzip.mains.quiver_separate_gathered --gathered-fn={input.gathered} --output-fn={output.separated}
 """
 
 TASK_SEGREGATE_SPLIT_SCRIPT = """
-python -m falcon_unzip.mains.bam_segregate_split --unzip-config-fn={input.unzip_config_fn} --merged-fofn-fn={input.merged_fofn} --split-fn={output.split} --bash-template-fn={output.bash_template}
+python3 -m falcon_unzip.mains.bam_segregate_split --unzip-config-fn={input.unzip_config_fn} --merged-fofn-fn={input.merged_fofn} --split-fn={output.split} --bash-template-fn={output.bash_template}
 """
 
 TASK_SEGREGATE_RUN_SCRIPT = """
-python -m falcon_unzip.mains.bam_segregate --extra={params.extra} --merged-bam-fn={input.merged_bam_fn} --segregated-bam-fns-fn={output.segregated_bam_fns}
+python3 -m falcon_unzip.mains.bam_segregate --extra={params.extra} --merged-bam-fn={input.merged_bam_fn} --segregated-bam-fns-fn={output.segregated_bam_fns}
 """
 
 
@@ -515,7 +515,7 @@ def run_workflow(wf, config, unzip_config_fn):
             dist=Dist(NPROC=1, job_dict=config['job.step.unzip.hasm']),
     ))
     TASK_GTOH_APPLY_UNITS_OF_WORK = """\
-    python -m falcon_unzip.mains.graphs_to_h_tigs_2 apply --units-of-work-fn={input.units_of_work} --results-fn={output.results}
+    python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 apply --units-of-work-fn={input.units_of_work} --results-fn={output.results}
 
     #--bash-template-fn= # not needed
     """

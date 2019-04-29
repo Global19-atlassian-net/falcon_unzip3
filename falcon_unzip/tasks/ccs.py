@@ -27,7 +27,7 @@ samtools index {output.UBAM}
 """
 
 TASK_PLACE_UNPHASED="""
-python -m falcon_unzip.mains.polish_unphased_readmapping --ctg {params.ctg} --fai {input.fai} --out-read-names read_names.txt --out-ref-names ref_names.txt --read-to-ctg {input.readtoctg}
+python3 -m falcon_unzip.mains.polish_unphased_readmapping --ctg {params.ctg} --fai {input.fai} --out-read-names read_names.txt --out-ref-names ref_names.txt --read-to-ctg {input.readtoctg}
 samtools fqidx -r read_names.txt {input.fq} > reads.fastq
 samtools faidx -r ref_names.txt {input.fa}  > ref.fasta
 minimap2 -a -x asm5 -t 1 ref.fasta reads.fastq | samtools view -bS -F 1796 > aln.bam
@@ -37,7 +37,7 @@ TASK_POLISH_PREAMBLE="""
 cat {input.P} {input.H} > {output.COMBINED}
 samtools faidx {output.COMBINED}
 cat ../../3-unzip/2-htigs/chunk_*/uow-*/*ctg_edges* > {output.EDGES}
-python -m falcon_unzip.mains.polish_read_to_ctg --rid-to-phase-fn {input.RIDTOPHASE} --edges-fn {output.EDGES} --lookup-fn {input.READNAMELOOKUP} --out {output.READTOCTG}
+python3 -m falcon_unzip.mains.polish_read_to_ctg --rid-to-phase-fn {input.RIDTOPHASE} --edges-fn {output.EDGES} --lookup-fn {input.READNAMELOOKUP} --out {output.READTOCTG}
 
 # Assume FQ is external. (TODO: Use a program so we can be more lenient.)
 ln -sf {input.FQ} {output.FQO}
@@ -49,7 +49,7 @@ TASK_HASM_COLLECT_SCRIPT = """\
 ## (assume we are in 3-unzip/somewhere/)
 
 # TODO: Stop using job_done.
-python -m falcon_unzip.mains.graphs_to_h_tigs_2 combine --results-fn={input.results} --done-fn={output.job_done}
+python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 combine --results-fn={input.results} --done-fn={output.job_done}
 
 find ./0-phasing -name "phased_reads" | sort | xargs cat >| all_phased_reads
 #find ./2-htigs -name "h_ctg_ids.*" | sort | xargs cat >| all_h_ctg_ids
@@ -64,11 +64,11 @@ if [[ ! -s all_p_ctg.fa ]]; then
 fi
 
 # # Generate a GFA for only primary contigs and haplotigs.
-# time python -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} >| ./asm.gfa
+# time python3 -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} >| ./asm.gfa
 
 # # Generate a GFA of all assembly graph edges. This GFA can contain
 # # edges and nodes which are not part of primary contigs and haplotigs
-# time python -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} --add-string-graph >| ./sg.gfa
+# time python3 -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} --add-string-graph >| ./sg.gfa
 """
 
 
@@ -76,12 +76,12 @@ TASK_GRAPH_TO_H_TIGS_SCRIPT = """\
 asm_dir=$(dirname {input.falcon_asm_done})
 hasm_dir=$(dirname {input.p_ctg})
 
-python -m falcon_unzip.mains.graphs_to_h_tigs_2 --gathered-rid-to-phase={input.gathered_rid_to_phase} --base-dir={params.topdir} --fc-asm-path ${{asm_dir}} --fc-hasm-path ${{hasm_dir}} --ctg-id all --rid-phase-map {input.rid_to_phase_all} --fasta {input.preads4falcon}
+python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 --gathered-rid-to-phase={input.gathered_rid_to_phase} --base-dir={params.topdir} --fc-asm-path ${{asm_dir}} --fc-hasm-path ${{hasm_dir}} --ctg-id all --rid-phase-map {input.rid_to_phase_all} --fasta {input.preads4falcon}
 
 # more script -- a little bit hacky here, we should improve
 
 #WD=$PWD
-# for f in `cat ../reads/ctg_list `; do mkdir -p $WD/$f; cd $WD/$f; python -m falcon_unzip.mains.dedup_h_tigs $f; done
+# for f in `cat ../reads/ctg_list `; do mkdir -p $WD/$f; cd $WD/$f; python3 -m falcon_unzip.mains.dedup_h_tigs $f; done
 
 for f in `cat ../reads/ctg_list `
 do
@@ -104,7 +104,7 @@ hasm_dir=$(dirname {input.p_ctg})
 
 # TODO: Should we look at ../reads/ctg_list ?
 
-python -m falcon_unzip.mains.graphs_to_h_tigs_2 split \
+python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 split \
         --gathered-rid-to-phase={input.gathered_rid_json} --base-dir={params.topdir} \
         --fc-asm-path ${{asm_dir}} --fc-hasm-path ${{hasm_dir}} \
         --rid-phase-map {input.rid_to_phase_all} --fasta {input.preads4falcon} \
@@ -118,11 +118,11 @@ TASK_HASM_SCRIPT = """\
 # TODO: Needs preads.db
 
 rm -f ./ctg_paths
-python -m falcon_unzip.mains.ovlp_filter_with_phase_strict \
+python3 -m falcon_unzip.mains.ovlp_filter_with_phase_strict \
         --fofn {input.las_fofn} --max-diff 120 --max-cov 120 --min-cov 1 \
         --n-core {params.pypeflow_nproc} --min-len 2500 --db {input.preads_db} \
         --rid-phase-map {input.rid_to_phase_all} > preads.p_ovl
-python -m falcon_unzip.mains.phased_ovlp_to_graph preads.p_ovl --min-len 2500 > fc.log
+python3 -m falcon_unzip.mains.phased_ovlp_to_graph preads.p_ovl --min-len 2500 > fc.log
 
 if [[ ! -e ./ctg_paths ]]; then
     exit 1
@@ -139,7 +139,7 @@ rm -f {output.p_ctg}
 # Given sg_edges_list, utg_data, ctg_paths, preads4falcon.fasta,
 # write p_ctg.fa and a_ctg_all.fa,
 # plus p_ctg_tiling_path, a_ctg_tiling_path:
-time python -m falcon_kit.mains.graph_to_contig
+time python3 -m falcon_kit.mains.graph_to_contig
 
 if [[ ! -e {output.p_ctg} ]]; then
     exit 1
@@ -151,17 +151,17 @@ TASK_PHASING_GATHER_SCRIPT = """\
 cat {input.ctg*} > {output.rid_to_phase_all}
 
 # creates the needed gathering JSON
-find {input.ctg*} | xargs -I [] readlink -f [] | python -m falcon_unzip.mains.gen_rid_gathered_json > {output.gathered_rid_json}
+find {input.ctg*} | xargs -I [] readlink -f [] | python3 -m falcon_unzip.mains.gen_rid_gathered_json > {output.gathered_rid_json}
 """
 
 TASK_READ_PHASING = """
 
         #TODO: break up command, and maybe remove some deps.
 
-        python -m falcon_unzip.mains.phasing_make_het_call --ctg-id {params.ctg} --bam-fn {input.BAM} --fasta-fn {input.T} --vmap-fn het_calls.ctg.vmap --vpos-fn het_calls.ctg.vpos --q-id-map-fn het_calls.ctg.msgpack
-        python -m falcon_unzip.mains.phasing_generate_association_table --ctg-id {params.ctg} --vmap=het_calls.ctg.vmap --atable=association_table.ctg.astab
-        python -m falcon_unzip.mains.phasing_get_phased_blocks --vmap=het_calls.ctg.vmap --atable=association_table.ctg.astab --p-variant=phased_vars.ctg.phased.txt
-        python -m falcon_unzip.mains.phasing_get_phased_reads --ctg-id={params.ctg} --vmap=het_calls.ctg.vmap --p-variant=phased_vars.ctg.phased.txt --q-id-map=het_calls.ctg.msgpack --phased-reads=phased_reads.ctg.phased.txt
+        python3 -m falcon_unzip.mains.phasing_make_het_call --ctg-id {params.ctg} --bam-fn {input.BAM} --fasta-fn {input.T} --vmap-fn het_calls.ctg.vmap --vpos-fn het_calls.ctg.vpos --q-id-map-fn het_calls.ctg.msgpack
+        python3 -m falcon_unzip.mains.phasing_generate_association_table --ctg-id {params.ctg} --vmap=het_calls.ctg.vmap --atable=association_table.ctg.astab
+        python3 -m falcon_unzip.mains.phasing_get_phased_blocks --vmap=het_calls.ctg.vmap --atable=association_table.ctg.astab --p-variant=phased_vars.ctg.phased.txt
+        python3 -m falcon_unzip.mains.phasing_get_phased_reads --ctg-id={params.ctg} --vmap=het_calls.ctg.vmap --p-variant=phased_vars.ctg.phased.txt --q-id-map=het_calls.ctg.msgpack --phased-reads=phased_reads.ctg.phased.txt
 
         #reformats the data keeping the last, second..forth columns
         cat phased_reads.ctg.phased.txt | perl -lane 'print "$F[-1] $F[1] $F[2] $F[3]"' >|   phased_reads.ctg.phased.reads.reformat.txt
@@ -171,15 +171,15 @@ TASK_READ_PHASING = """
         #pulls the reference into the proto dir
         samtools faidx {input.T} {params.ctg} > proto/ref.fa
 
-        python -m falcon_unzip.proto.main_augment_pb --wd ./proto/ --ctg-id {params.ctg}     --p-ctg {input.PCTG} --p-ctg-tiling-path {input.PTILE} --a-ctg {input.ACTG} --a-ctg-tiling-path {input.ATILE}  --p-variant-fn phased_vars.ctg.phased.txt --preads-sam {input.BAM}  --extracted-ctg-fasta {input.T} --rawread-bam {input.BAM}  --rid-phase-map phased_reads.ctg.phased.reads.reformat.txt  --out-updated-rid-phase_map rid_to_phase.tmp
+        python3 -m falcon_unzip.proto.main_augment_pb --wd ./proto/ --ctg-id {params.ctg}     --p-ctg {input.PCTG} --p-ctg-tiling-path {input.PTILE} --a-ctg {input.ACTG} --a-ctg-tiling-path {input.ATILE}  --p-variant-fn phased_vars.ctg.phased.txt --preads-sam {input.BAM}  --extracted-ctg-fasta {input.T} --rawread-bam {input.BAM}  --rid-phase-map phased_reads.ctg.phased.reads.reformat.txt  --out-updated-rid-phase_map rid_to_phase.tmp
 
         #grabs the names of all the CCS reads that associate with this primary contig.
         grep -w {params.ctg} {input.RID_TO_CTG} > rid_to_ctg.txt
 
         #converts the CCS read names into DAZDB read ids.
-        python -m falcon_unzip.mains.db_to_ccs_id --lookup {input.readname_lookup} --rid-to-phase rid_to_phase.tmp --rid-to-ctg rid_to_ctg.txt --output {output.M} --ctg {params.ctg}
+        python3 -m falcon_unzip.mains.db_to_ccs_id --lookup {input.readname_lookup} --rid-to-phase rid_to_phase.tmp --rid-to-ctg rid_to_ctg.txt --output {output.M} --ctg {params.ctg}
 
-        python -m falcon_unzip.proto.extract_phased_preads --ctg-id {params.ctg} --preads ../../../../1-preads_ovl/db2falcon/preads4falcon.fasta --rid-phase-map {output.M} --out proto/preads.fasta
+        python3 -m falcon_unzip.proto.extract_phased_preads --ctg-id {params.ctg} --preads ../../../../1-preads_ovl/db2falcon/preads4falcon.fasta --rid-phase-map {output.M} --out proto/preads.fasta
 
         time minimap2 -a -x map-pb -t 1 proto/ref.fa proto/preads.fasta > proto/preads.sam
 """
@@ -406,7 +406,7 @@ def run_workflow(wf, config, unzip_config_fn):
     wf.refreshTargets()
 
     TASK_GTOH_APPLY_UNITS_OF_WORK = """\
-    python -m falcon_unzip.mains.graphs_to_h_tigs_2 apply --units-of-work-fn={input.units_of_work} --results-fn={output.results}
+    python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 apply --units-of-work-fn={input.units_of_work} --results-fn={output.results}
 
     #--bash-template-fn= # not needed
     """

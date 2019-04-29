@@ -351,5 +351,5 @@ def main2(argv=sys.argv):
 
 if __name__ == '__main__':  # pragma: no cover
     main()  # We do not use main2() anymore, since rr_hctg_track2.nim is much better.
-    # But note that the Nim versions cannot use the 'python -m' trick anyway, so
+    # But note that the Nim versions cannot use the 'python3 -m' trick anyway, so
     # we will have to register those in mobs someday.

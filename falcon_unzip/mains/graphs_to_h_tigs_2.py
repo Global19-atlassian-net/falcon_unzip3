@@ -1508,7 +1508,7 @@ def cmd_apply(args):
 
 ######
 TASK_APPLY_UNITS_OF_WORK = """\
-python -m falcon_unzip.mains.graphs_to_h_tigs_2 apply --units-of-work-fn={input.units_of_work} --results-fn={output.results}
+python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 apply --units-of-work-fn={input.units_of_work} --results-fn={output.results}
 
 #--bash-template-fn= # not needed
 """
