@@ -15,7 +15,7 @@ pip3 install -v --user --find-links=${WHEELHOUSE} pytest networkx pysam msgpack 
 
 python3 -c 'import falcon_kit; print(falcon_kit.falcon)'
 
-pip3 -v install --user --no-deps --use-wheel --find-links=${WHEELHOUSE} .
+pip3 -v install --user --no-deps --find-links=${WHEELHOUSE} --edit .
 
 pip3 install --user pytest pytest-cov pylint
 export MY_TEST_FLAGS="-v -s --durations=0 --cov=falcon_unzip --cov-report=term-missing --cov-report=xml:coverage.xml --cov-branch"

@@ -9,7 +9,7 @@ wheel:
 	pip3 wheel -v --wheel-dir=${WHEELHOUSE} --no-deps .
 	ls -larth ${WHEELHOUSE}
 install-wheel: wheel
-	pip3 -v install --user --upgrade --no-deps --use-wheel --find-links=dist/ .
+	pip3 -v install --user --upgrade --no-deps --find-links=dist/ falcon_unzip
 test:
 	python3 -c 'import falcon_kit; print(falcon_kit.falcon); import falcon_unzip'
 	py.test ${MY_TEST_FLAGS} --junit-xml=test.xml --doctest-modules falcon_unzip/ test/
