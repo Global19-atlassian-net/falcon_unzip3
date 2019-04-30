@@ -11,7 +11,7 @@ wheel:
 install-wheel: wheel
 	pip3 -v install --user --upgrade --no-deps --use-wheel --find-links=dist/ .
 test:
-	python3 -c 'import falcon_kit; print falcon_kit.falcon; import falcon_unzip'
+	python3 -c 'import falcon_kit; print(falcon_kit.falcon); import falcon_unzip'
 	py.test ${MY_TEST_FLAGS} --junit-xml=test.xml --doctest-modules falcon_unzip/ test/
 autopep8:
 	autopep8 --max-line-length=120 -ir -j0 falcon_unzip/tasks examples/ src/ setup.py test/
