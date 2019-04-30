@@ -2,6 +2,7 @@ dist/
 build/
 *.egg-info/
 /LOCAL/
+/LOCAL3/
 /test-reports/
 *.xml
 .pytest_cache/

@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 from setuptools import setup, find_packages
-from distutils.core import Extension
 import glob
 import subprocess
 
@@ -12,8 +10,6 @@ install_requires = [
         "msgpack",
         "intervaltree",
 ]
-
-#scripts = glob.glob("src/py_scripts/*.py")
 
 try:
     local_version = '+git.{}'.format(
