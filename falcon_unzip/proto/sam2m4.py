@@ -92,7 +92,7 @@ def pysam_to_m4(aln, ref_lens = None, skip_supplementary=True, skip_secondary=Tr
 
     return ret
 
-def sam_to_m4(in_path):
+def sam_to_m4(in_path, chr_id = None):
     ret = []
 
     fp_in, is_bam = open_sam_bam_for_reading(in_path)
@@ -106,10 +106,12 @@ def sam_to_m4(in_path):
     for sam in it_fp_in:
         num_lines += 1
         if (num_lines % 10000 == 0):
-            LOG.info('Loaded {} lines.'.format((num_lines - 1)))
+            LOG.info('Processed {} lines, total {} alignments loaded so far.'.format((num_lines - 1), len(ret)))
 
         m4 = pysam_to_m4(sam, ref_lens)
         if m4 == None:
+            continue
+        if chr_id and len(m4) > 2 and m4[1] != chr_id:
             continue
         ret.append(m4)
 
