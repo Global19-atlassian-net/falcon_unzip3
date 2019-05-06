@@ -438,11 +438,11 @@ def delineate_regions(ctg_id, p_path, a_paths, a_placement):
 
     return all_regions
 
-def load_preads_alignments(sam_path):
+def load_preads_alignments(sam_path, ctg_id):
     # Load alignments, convert to M4 for easier coordinate lookup,
     # and filter multiple mappings.
     qname_dict = {}
-    for aln in sam2m4.sam_to_m4(sam_path):
+    for aln in sam2m4.sam_to_m4(sam_path, ctg_id):
         qname, tname = aln[0], aln[1]
         q_orient, q_start, q_end, q_len = aln[4], aln[5], aln[6], aln[7]
         t_orient, t_start, t_end, t_len = aln[8], aln[9], aln[10], aln[11]
@@ -510,7 +510,7 @@ def run(wd, ctg_id, extracted_ctg_fasta, p_ctg, p_ctg_tiling_path, a_ctg, a_ctg_
     # This is needed to filter preads which map
     # to bubbles.
     ###################################################
-    m4 = load_preads_alignments(preads_sam)
+    m4 = load_preads_alignments(preads_sam, ctg_id)
 
     ###################################################
     # Modify the phases.
