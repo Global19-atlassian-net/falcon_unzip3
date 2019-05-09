@@ -1265,7 +1265,7 @@ def run(args):
 
             v1 = s_path[0]
             for v2 in s_path[1:]:
-                for s, t, v in ug2.out_edges(v1, keys=True):
+                for s, t, v in list(ug2.out_edges(v1, keys=True)):
                     if t != v2:
                         continue
                     length, score, edges, type_ = u_edge_data[(s, t, v)]
@@ -1334,7 +1334,7 @@ def run(args):
                 rv = reverse_end(v)
                 ug_edge_to_remove.add((s, t, v))
                 ug_edge_to_remove.add((rs, rt, rv))
-    for s, t, v in list(ug_edge_to_remove):
+    for s, t, v in ug_edge_to_remove:
         try:
             ug2.remove_edge(s, t, key=v)
         except Exception:
