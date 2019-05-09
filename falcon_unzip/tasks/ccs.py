@@ -15,7 +15,7 @@ samtools faidx {input.FA} {params.ctg} > ref.fasta
 perl -lane 'print $F[0] if $F[1] eq "{params.ctg}" && $F[2] != -1' {input.READTOCTG} | sort | uniq > readnames.txt
 samtools view -F 1796 {input.UBAM} {params.ctg} | cut -f 1 | sort | uniq >> readnames.txt
 samtools fqidx -r readnames.txt {input.FQ} > reads.fastq
-minimap2 -a -x asm5 -t {params.pypeflow_nproc} ref.fasta reads.fastq | samtools view -F 1796 > aln.sam
+minimap2 -a -x map-pb -t {params.pypeflow_nproc} ref.fasta reads.fastq | samtools view -F 1796 > aln.sam
 racon -t {params.pypeflow_nproc} reads.fastq aln.sam ref.fasta > {output.POL}
 """
 
@@ -30,7 +30,7 @@ TASK_PLACE_UNPHASED="""
 python3 -m falcon_unzip.mains.polish_unphased_readmapping --ctg {params.ctg} --fai {input.fai} --out-read-names read_names.txt --out-ref-names ref_names.txt --read-to-ctg {input.readtoctg}
 samtools fqidx -r read_names.txt {input.fq} > reads.fastq
 samtools faidx -r ref_names.txt {input.fa}  > ref.fasta
-minimap2 -a -x asm5 -t 1 ref.fasta reads.fastq | samtools view -bS -F 1796 > aln.bam
+minimap2 -a -x map-pb -t 1 ref.fasta reads.fastq | samtools view -bS -F 1796 > aln.bam
 """
 
 TASK_POLISH_PREAMBLE="""
@@ -199,7 +199,7 @@ TASK_SORT = """
         samtools view -F 3844 {output.OBAMS}  | perl -lane '$F[2] =~ s/\-.*//; print "$F[0] $F[2]"' > {output.RID_TO_CTG}
 """
 TASK_MAP = """
-        minimap2 -a -x asm5 -t {params.pypeflow_nproc} {input.T} {input.R} | samtools view -F 3840 -bS > {output.OBAMA}
+        minimap2 -a -x map-pb -t {params.pypeflow_nproc} {input.T} {input.R} | samtools view -F 3840 -bS > {output.OBAMA}
 """
 TASK_PREAMBLE = """
         cat {input.P} {input.A} > {output.FA}
