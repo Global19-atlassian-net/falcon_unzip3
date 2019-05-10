@@ -174,7 +174,10 @@ TASK_READ_PHASING = """
         python3 -m falcon_unzip.proto.main_augment_pb --wd ./proto/ --ctg-id {params.ctg}     --p-ctg {input.PCTG} --p-ctg-tiling-path {input.PTILE} --a-ctg {input.ACTG} --a-ctg-tiling-path {input.ATILE}  --p-variant-fn phased_vars.ctg.phased.txt --preads-sam {input.BAM}  --extracted-ctg-fasta {input.T} --rawread-bam {input.BAM}  --rid-phase-map phased_reads.ctg.phased.reads.reformat.txt  --out-updated-rid-phase_map rid_to_phase.tmp
 
         #grabs the names of all the CCS reads that associate with this primary contig.
-        grep -w {params.ctg} {input.RID_TO_CTG} > rid_to_ctg.txt
+        (
+        set -vx +e
+        grep -w {params.ctg} {input.RID_TO_CTG} >| rid_to_ctg.txt
+        )
 
         #converts the CCS read names into DAZDB read ids.
         python3 -m falcon_unzip.mains.db_to_ccs_id --lookup {input.readname_lookup} --rid-to-phase rid_to_phase.tmp --rid-to-ctg rid_to_ctg.txt --output {output.M} --ctg {params.ctg}
