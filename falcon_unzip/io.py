@@ -57,7 +57,7 @@ def validate_config(config):
     # This simple and quick check catches common problems early.
     # This code might go somewhere else someday.
     smrt_bin_cmds = [
-        'blasr', 'samtools', 'pbalign', 'gcpp',
+        'blasr', 'samtools', 'gcpp',
     ]
     path_cmds = [
         'minimap2',
