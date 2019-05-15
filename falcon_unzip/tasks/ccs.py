@@ -177,6 +177,7 @@ TASK_READ_PHASING = """
         (
         set -vx +e
         grep -w {params.ctg} {input.RID_TO_CTG} >| rid_to_ctg.txt
+        true
         )
 
         #converts the CCS read names into DAZDB read ids.
