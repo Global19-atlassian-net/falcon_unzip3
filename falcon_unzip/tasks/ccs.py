@@ -547,6 +547,10 @@ def run_workflow(wf, config, unzip_config_fn):
 
     SKIP = set()
     for (ctg, count) in PH.items():
+        if not ctg in SIZES:
+            LOG.warning("ctg {} is being skipped because it did not unzip".format(ctg))
+            SKIP.add(ctg)
+            continue
         if count < 10:
             LOG.warning("ctg {} is being skipped due to depth of coverage {} < 10 reads total".format(ctg, count))
             SKIP.add(ctg)
