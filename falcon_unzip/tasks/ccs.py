@@ -481,7 +481,17 @@ def run_workflow(wf, config, unzip_config_fn):
 
     collected = dict()
 
-    for ctg in CTGS:
+    unzip_p_ctg_fai = "3-unzip/all_p_ctg.fa.fai"
+
+    PUCTGS = []
+
+    with open(unzip_p_ctg_fai) as f:
+        for line in f:
+            lc = line.strip().split("\t")
+            if(lc[0][0] == "0"):
+                PUCTGS.append(lc[0])
+
+    for ctg in PUCTGS:
         fn = '4-polishing/temp-unphased/{}/aln.bam'.format(ctg)
         collected['ctg'+ctg] = fn
         wf.addTask(gen_task(
@@ -537,6 +547,10 @@ def run_workflow(wf, config, unzip_config_fn):
 
     SKIP = set()
     for (ctg, count) in PH.items():
+        if not ctg in SIZES:
+            LOG.warning("ctg {} is being skipped because it did not unzip".format(ctg))
+            SKIP.add(ctg)
+            continue
         if count < 10:
             LOG.warning("ctg {} is being skipped due to depth of coverage {} < 10 reads total".format(ctg, count))
             SKIP.add(ctg)
