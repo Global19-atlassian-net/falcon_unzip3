@@ -160,10 +160,7 @@ def update_falcon_symlinks():
         symlink_if_missing('las-gather', 'las-merge-combine')
     LOG.info('Falcon directories up-to-date.')
 
-def run(target, config_fn, logging_config_fn):
-    global LOG
-    LOG = support.setup_logger(logging_config_fn)
-
+def run_logged(target, config_fn):
     config = parse_config(config_fn)
     update_falcon_symlinks()
 
@@ -177,3 +174,21 @@ def run(target, config_fn, logging_config_fn):
     else:
         validate_input_bam_fofn(config, config_fn)
         unzip_all(config, unzip_config_fn)
+
+def run(target, config_fn, logging_config_fn):
+    global LOG
+    LOG = support.setup_logger(logging_config_fn)
+    if not logging_config_fn:
+        msg = 'Default logging setup:\n' + support.default_logging_config
+        LOG.info(msg)
+        # TODO(CD): Report this in run_support, not here.
+
+    try:
+        run_logged(target, config_fn)
+    except Exception:
+        msg = 'Error for run(target={}, config_fn={}, logging_config_fn={})'.format(
+                target, config_fn, logging_config_fn)
+        LOG.exception(msg)
+        raise
+        # Note: if logging is configured to report to stderr, then the exception could
+        # appear on stderr twice. That is fine.
