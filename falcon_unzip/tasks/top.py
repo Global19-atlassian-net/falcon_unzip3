@@ -5,10 +5,12 @@ ease translation into WDL, etc.
 
 Also, these are testable.
 """
-
 from ..io import serialize
+import logging
 
-def p_ctg_fai2ctgs(p_ctg_fai_fn, o_fn):
+LOG = logging.getLogger(__name__)
+
+def fai2ctgs(p_ctg_fai_fn, o_fn):
     CTGS = []
 
     with open(p_ctg_fai_fn) as f:

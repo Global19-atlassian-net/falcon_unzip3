@@ -18,11 +18,11 @@ def datadir(request):
     return request.fspath.join('..', '..', 'test_data')
 
 
-def test_p_ctg_fai2ctgs(datadir, tmpdir):
+def test_fai2ctgs(datadir, tmpdir):
     p_ctg_fai_fn = str(datadir.join('greg200k-sv2-ccs/2-asm-falcon/p_ctg.fa.fai'))
     o_fn = str(tmpdir.join('CTGS.json'))
 
-    MOD.p_ctg_fai2ctgs(p_ctg_fai_fn, o_fn)
+    MOD.fai2ctgs(p_ctg_fai_fn, o_fn)
 
     expected_fn = datadir.join('greg200k-sv2-ccs/expected/CTGS.json')
     diff(expected_fn, o_fn)
