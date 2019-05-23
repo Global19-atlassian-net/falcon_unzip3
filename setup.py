@@ -2,6 +2,9 @@ from setuptools import setup, find_packages
 import glob
 import subprocess
 
+# This is fine as long as that imports nothing else.
+from falcon_unzip import __version__
+
 install_requires = [
         "falcon-kit>=1.4.1",
         "pypeflow>=2.3.0",
@@ -18,7 +21,7 @@ except Exception:
     local_version = ''
 
 setup(name='falcon_unzip',
-      version='1.3.2' + local_version, # also in '__init_.py'
+      version=__version__ + local_version, # also in '__init_.py'
       description='Falcon unzip',
       author='Jason Chin',
       author_email='jchin@pacificbiosciences.com',
