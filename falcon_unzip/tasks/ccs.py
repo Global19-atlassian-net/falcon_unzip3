@@ -1,8 +1,8 @@
-
 from falcon_kit.pype import Dist
 #from falcon_kit import pype_tasks
 from falcon_kit.pype import (wrap_gen_task as gen_task, gen_parallel_tasks, Dist)
 from .. import io
+from . import top
 import glob
 import logging
 import os
@@ -271,13 +271,8 @@ def run_workflow(wf, config, unzip_config_fn):
 
     wf.refreshTargets()
 
-    CTGS = []
-
-    with open(p_ctg_fai_fn) as f:
-          for line in f:
-            lc = line.strip().split("\t")
-            if(lc[0][0] == "0"):
-                CTGS.append(lc[0])
+    top.fai2ctgs(p_ctg_fai_fn, 'CTGS.json')
+    CTGS = io.deserialize('CTGS.json')  # currently in top-dir
 
     rid_to_ctg = "./3-unzip/sorting/rid_to_cgt.txt"
 
@@ -483,15 +478,9 @@ def run_workflow(wf, config, unzip_config_fn):
 
     collected = dict()
 
-    unzip_p_ctg_fai = "3-unzip/all_p_ctg.fa.fai"
-
-    PUCTGS = []
-
-    with open(unzip_p_ctg_fai) as f:
-        for line in f:
-            lc = line.strip().split("\t")
-            if(lc[0][0] == "0"):
-                PUCTGS.append(lc[0])
+    unzip_p_ctg_fai_fn = "3-unzip/all_p_ctg.fa.fai"
+    top.fai2ctgs(unzip_p_ctg_fai_fn, 'PUCTGS.json')
+    PUCTGS = io.deserialize('PUCTGS.json')  # currently in top-dir
 
     for ctg in PUCTGS:
         fn = '4-polishing/temp-unphased/{}/aln.bam'.format(ctg)
@@ -529,39 +518,7 @@ def run_workflow(wf, config, unzip_config_fn):
 
     wf.refreshTargets()
 
-    # TODO: Someday SIZES/PH/SKIP needs to be its own task.
-
-    SIZES = {}
-
-    with open(combined_ph_fai) as fai:
-        for line in fai:
-            lc = line.strip().split("\t")
-            SIZES[lc[0]] = lc[1]
-
-    PH = {}
-
-    with open(readtoctg) as f:
-        for line in f:
-            if line.startswith('#'):
-                continue
-            lc = line.strip().split(" ")
-            PH[lc[1]] = 1 + PH.get(lc[1], 0)
-
-    SKIP = set()
-    for (ctg, count) in PH.items():
-        if not ctg in SIZES:
-            LOG.warning("ctg {} is being skipped because it did not unzip".format(ctg))
-            SKIP.add(ctg)
-            continue
-        if count < 10:
-            LOG.warning("ctg {} is being skipped due to depth of coverage {} < 10 reads total".format(ctg, count))
-            SKIP.add(ctg)
-        if int(SIZES[ctg]) < 10000:
-            LOG.warning("ctg {} is being skipped due to size {} < 10kbp".format(ctg, SIZES[ctg]))
-            SKIP.add(ctg)
-
-    for d in SKIP:
-        del PH[d]
+    PH = top.getPH(combined_ph_fai, readtoctg)
 
     fns = list()
     LOG.info('len(PH)={}, {!r}'.format(len(PH), dist))
