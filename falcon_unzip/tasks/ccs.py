@@ -63,6 +63,8 @@ if [[ ! -s all_p_ctg.fa ]]; then
     exit 1
 fi
 
+samtools faidx all_p_ctg.fa
+
 # # Generate a GFA for only primary contigs and haplotigs.
 # time python3 -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} >| ./asm.gfa
 
