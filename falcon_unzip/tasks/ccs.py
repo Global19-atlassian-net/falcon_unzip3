@@ -235,8 +235,14 @@ def run_workflow(wf, config, unzip_config_fn):
     a_tile_fn = os.path.join(asm_dir, 'a_ctg_tiling_path')
 
     # Typical job-dist configuration
-    dist = Dist(
+    dist_low = Dist(
         job_dict=config['job.defaults'],
+        use_tmpdir=False, # until we fix a bug in pypeflow
+    )
+
+    # high resource configuration
+    dist_high = Dist(
+        job_dict=config['job.high'],
         use_tmpdir=False, # until we fix a bug in pypeflow
     )
 
@@ -286,7 +292,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 "OBAMA": "3-unzip/mapping/reads_mapped.bam",
             },
             parameters={},
-            dist=dist,
+            dist=dist_high,
     ))
 
 
@@ -301,7 +307,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 "RID_TO_CTG" : rid_to_ctg,
             },
             parameters={},
-            dist=dist,
+            dist=dist_high,
     ))
 
     readname_lookup = "3-unzip/readnames/readname_lookup.txt"
@@ -379,7 +385,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 'p_ctg': hasm_p_ctg_fn,
             },
             parameters={},
-            dist=dist,
+            dist=dist_low,
     ))
 
     g2h_all_units_fn = './3-unzip/2-htigs/split/all-units-of-work.json'
@@ -398,10 +404,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 'bash_template': dummy_fn,
             },
             parameters={},
-            dist = Dist(
-                job_dict=config['job.step.unzip.hasm'],
-                NPROC=1,
-            )
+            dist = dist_high,
     ))
 
     wf.refreshTargets()
@@ -539,7 +542,7 @@ def run_workflow(wf, config, unzip_config_fn):
             parameters={
                 'ctg': ctg,
             },
-            dist=dist,
+            dist=dist_low,
         ))
 
     wf.refreshTargets()
