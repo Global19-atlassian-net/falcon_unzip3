@@ -524,7 +524,7 @@ def run_workflow(wf, config, unzip_config_fn):
     PH = top.getPH(combined_ph_fai, readtoctg)
 
     fns = list()
-    LOG.info('len(PH)={}, {!r}'.format(len(PH), dist))
+    LOG.info('len(PH)={}, {!r}'.format(len(PH), dist_low))
     for ctg in PH:
         fn = "4-polishing/temp-phased/{}/{}.polished.fa".format(ctg, ctg)
         fns.append(fn)
