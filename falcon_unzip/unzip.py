@@ -28,6 +28,9 @@ def unzip_all(config, unzip_config_fn):
 
 def ccs_all(config, unzip_config_fn):
     job_defaults = config['job.defaults']
+    if 'job.high' not in config:
+        config['job.high'] = dict(job_defaults)
+        LOG.info('Missing "job.high" section; using "job.defaults" there.')
     use_tmpdir = job_defaults['use_tmpdir'] # None/False is fine.
     wf = PypeProcWatcherWorkflow(
         job_defaults=job_defaults,
@@ -45,6 +48,7 @@ def update_config_from_sections(config, cfg):
             'job.step.unzip.hasm',
             'job.step.unzip.quiver',
             'job.defaults',
+            'job.high',
     ])
     all_sections = set(k for k,v in cfg.items() if isinstance(v, dict))
     unexpected = all_sections - allowed_sections
