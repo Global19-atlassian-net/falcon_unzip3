@@ -68,6 +68,7 @@ public class PlanSpec {
             .permissions(new Permissions()
                     .userPermissions("cdunn", PermissionType.ADMIN, PermissionType.EDIT, PermissionType.CLONE, PermissionType.BUILD, PermissionType.VIEW)
                     .userPermissions("bli", PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN));
+                    .userPermissions("zkronenberg", PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN));
         return planPermission;
     }
     
