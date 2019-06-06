@@ -66,8 +66,8 @@ public class PlanSpec {
     public PlanPermissions planPermission() {
         final PlanPermissions planPermission = new PlanPermissions(new PlanIdentifier("SAT", "FALBS"))
             .permissions(new Permissions()
-                    .userPermissions("bli", PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN))
-      				.groupPermissions("tag_team", PermissionType.ADMIN, PermissionType.EDIT, PermissionType.CLONE, PermissionType.BUILD, PermissionType.VIEW));              
+                    .userPermissions("bli", PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
+      				.groupPermissions("tag_team", PermissionType.ADMIN, PermissionType.EDIT, PermissionType.CLONE, PermissionType.BUILD, PermissionType.VIEW));
               return planPermission;
     }
     
