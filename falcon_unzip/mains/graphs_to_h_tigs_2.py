@@ -1,7 +1,9 @@
 """
 I think this has implicit dependencies:
 * 3-unzip/2-hasm/p_ctg_tiling_path
-* and?
+* 2-falcon/p_ctg.fa
+* 2-falcon/sg_edges
+* 3-unzip/2-hasm/sg_edges
 """
 from ..proto import (cigartools, execute, sam2m4, haplotig as Haplotig)
 from ..proto.haplotig import Haplotig
@@ -32,8 +34,6 @@ import sys
 import logging
 
 # for shared memory usage
-global p_asm_G
-global h_asm_G
 global all_rid_to_phase
 global all_flat_rid_to_phase
 global all_haplotigs_for_ctg
@@ -1367,6 +1367,10 @@ def load_sg_edges(sg_edges_list_fn):
     with io.open_progress(sg_edges_list_fn, 'r') as fp:
         for line in fp:
             sl = line.strip().split()
+            #THIS IS OKAY FOR NOW... TRs might be needed somewhere (zk)
+            #Most of the data is TR (transitively reduced) and loading it all takes GB++
+            if "TR" in sl[7]:
+                continue
             sg_edges[(sl[0], sl[1])] = sl
     return sg_edges
 
@@ -1375,8 +1379,6 @@ def define_globals(args):
     global all_rid_to_phase
     global all_flat_rid_to_phase
     global all_haplotigs_for_ctg
-    global p_asm_G
-    global h_asm_G
     global p_ctg_seqs
     global sg_edges
     global p_ctg_tiling_paths
@@ -1386,22 +1388,7 @@ def define_globals(args):
     base_dir = args.base_dir
     fasta_fn = args.fasta
 
-    #hasm_falcon_path = os.path.join(fc_hasm_path, 'asm-falcon')
     hasm_falcon_path = fc_hasm_path # They run in same dir, for now.
-
-    LOG.info('Loading p assembly graph.')
-    p_asm_G = AsmGraph(os.path.join(fc_asm_path, "sg_edges_list"),
-                       os.path.join(fc_asm_path, "utg_data"),
-                       os.path.join(fc_asm_path, "ctg_paths"))
-    LOG.info('Loading h assembly graph.')
-    h_asm_G = AsmGraph(os.path.join(fc_hasm_path, "sg_edges_list"),
-                       os.path.join(fc_hasm_path, "utg_data"),
-                       os.path.join(fc_hasm_path, "ctg_paths"))
-    assert p_asm_G, 'Empty AsmGraph. Maybe empty inputs?\n{!r}\n{!r}\n{!r}'.format(
-        os.path.join(fc_asm_path, "sg_edges_list"),
-        os.path.join(fc_asm_path, "utg_data"),
-        os.path.join(fc_asm_path, "ctg_paths"),
-    )
 
     LOG.info('Loading phasing info and making the read ID sets.')
 
@@ -1468,8 +1455,6 @@ def cmd_apply(args):
 
     define_globals(sub_args)
 
-    #LOG.info('Creating the exe list for: {}'.format(str(ctg_id_list)))
-
     exe_list = list()
     for i, uow in enumerate(units_of_work):
         ctg_id = uow['params']['ctg_id']
@@ -1480,10 +1465,6 @@ def cmd_apply(args):
         exe_list.append((ctg_id, proto_dir, out_dir, base_dir, False, min_query_span, min_target_span))
 
     LOG.info('Running {} units of work.'.format(len(exe_list)))
-
-    #exec_pool = Pool(args.nproc)  # TODO, make this configurable
-    #exec_pool.map(run_generate_haplotigs_for_ctg, exe_list)
-    ##map( generate_haplotigs_for_ctg, exe_list)
 
     results = list()
     for i, exe in enumerate(exe_list):
@@ -1509,8 +1490,6 @@ def cmd_apply(args):
 ######
 TASK_APPLY_UNITS_OF_WORK = """\
 python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 apply --units-of-work-fn={input.units_of_work} --results-fn={output.results}
-
-#--bash-template-fn= # not needed
 """
 
 def cmd_split(args):
@@ -1681,26 +1660,8 @@ def parse_args(argv):
     parser_combine.add_argument(
         '--done-fn',
         help='Output: Sentinel.')
-    #parser_combine.add_argument(
-    #    '--combined-fn',
-    #    help='Output: JSON. I think it will be a list of dicts, describing the p/h ctgs, ids, and edges. This might be deduced from the run-dir, to minimize the number of outputs we need to specify explicitly. The list will exclude units-of-work which produced empty h_ctg files. Also, the paths will probably be absolutized here, in case the "gatherer" did not do that already. (There were relative so "apply" could occur in a tmpdir.)')
     parser_combine.set_defaults(func=cmd_combine)
-
-    #parser_run = subparsers.add_parser('run',
-    #        help='Actually run "graph_to_h_tigs". This is called for each unit-of-work, in a directory selected by subcommand "apply".',
-    #        description='This a single-threaded-program, but it will call multi-threaded blasr.')
-
-    #parser_run.add_argument(
-    #    '--ctg-id', type=str, required=True,
-    #    help='contig identifier in the bam file')
-    #parser_run.add_argument(
-    #    '--proto-dir', type=str, required=True,
-    #    help='directory of phasing work, e.g. "3-unzip/0-phasing/000000F/uow-00/proto/"')
-    #parser_run.add_argument(
-    #    '--nproc', type=int, default=8, help="number of processes to use")
-
     args = parser.parse_args(argv[1:])
-
     return args
 
 
@@ -1711,25 +1672,10 @@ def main(argv=sys.argv):
     # Write all warnings to stderr, including from thread-loggers.
     # (However, the main-thread logger does not currently propagate recs here.)
     hdlr = logging.StreamHandler(sys.stderr)
-    #hdlr.setLevel(logging.WARNING - 1) # We want records from execute_command() too.
     hdlr.setLevel(logging.INFO)
-    #hdlr.setFormatter(logging.Formatter('[Proto %(asctime)s] %(levelname)s:%(name)s:t%(message)s', '%Y-%m-%d %H:%M:%S'))
     hdlr.setFormatter(logging.Formatter('[%(levelname)s %(asctime)s] %(message)s', '%Y-%m-%d %H:%M:%S'))
     LOG.addHandler(hdlr)
     LOG.setLevel(logging.NOTSET) # Important, as other NOTSET loggers inherit this level.
-
-    # When we were multi-threads, we wanted separate logging per thread.
-    #### In main thread, log to a special file.
-    #### (Turn this off if too verbose.)
-    #### This handler will not see the thread-logger
-    #### log-records at all.
-    ###LOG = logging.getLogger('mainthread')
-    ####hdlr = logging.FileHandler('graphs_to_h_tigs_2.log', 'w')
-    ###hdlr = logging.StreamHandler(sys.stderr)
-    ###hdlr.setLevel(logging.INFO)
-    ###hdlr.setFormatter(logging.Formatter('[Proto %(asctime)s] %(levelname)s:%(message)s', '%Y-%m-%d %H:%M:%S'))
-    ###LOG.addHandler(hdlr)
-    ###LOG.propagate = False
 
     #import pdb; pdb.set_trace()
     logging.addLevelName(logging.WARNING-1, 'EXECUTE')
