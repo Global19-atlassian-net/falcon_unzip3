@@ -7,6 +7,7 @@ I think this has implicit dependencies:
 """
 from ..proto import (cigartools, execute, sam2m4, haplotig as Haplotig)
 from ..proto.haplotig import Haplotig
+from ..tasks import top
 from ..proto.graphs_to_h_tigs_2_utils import (
         mkdir,
         extract_unphased_haplotig_paths,
@@ -32,6 +33,7 @@ import intervaltree
 import argparse
 import sys
 import logging
+import pysam
 
 # for shared memory usage
 global all_rid_to_phase
@@ -1503,7 +1505,11 @@ def cmd_split(args):
 
     define_globals(args)
 
-    ctg_id_list = list(p_asm_G.ctg_data.keys())
+    #TODO remove hard coded path to FAI
+    falcon_p_ctg_fai_fn = "../../../2-asm-falcon/p_ctg.fa.fai"
+    top.fai2ctgs(falcon_p_ctg_fai_fn, '3-unzip/2-htigs/split/p_ctg_names.json')
+    pnames = io.deserialize('3-unzip/2-htigs/split/p_ctg_names.json') 
+    ctg_id_list = list(pnames)
 
     LOG.info('Creating units-of-work for ctg_id_list (though many will be skipped): {}'.format(ctg_id_list))
 
