@@ -15,8 +15,10 @@ samtools faidx {input.FA} {params.ctg} > ref.fasta
 perl -lane 'print $F[0] if $F[1] eq "{params.ctg}" && $F[2] != -1' {input.READTOCTG} | sort | uniq > readnames.txt
 samtools view -F 1796 {input.UBAM} {params.ctg} | cut -f 1 | sort | uniq >> readnames.txt
 samtools fqidx -r readnames.txt {input.FQ} > reads.fastq
-minimap2 -a -x map-pb -t {params.pypeflow_nproc} ref.fasta reads.fastq | samtools view -F 1796 > aln.sam
-racon -t {params.pypeflow_nproc} reads.fastq aln.sam ref.fasta > {output.POL}
+time pbmm2 align --sort -j {params.pypeflow_nproc} --preset CCS ref.fasta reads.fastq | samtools view -F 1796  > aln.sam
+time racon -t {params.pypeflow_nproc} reads.fastq aln.sam ref.fasta > {output.POL}
+# Cleanup 
+rm *.sam *.fastq
 """
 
 TASK_GATHER_UNPHASED="""
@@ -30,7 +32,7 @@ TASK_PLACE_UNPHASED="""
 python3 -m falcon_unzip.mains.polish_unphased_readmapping --ctg {params.ctg} --fai {input.fai} --out-read-names read_names.txt --out-ref-names ref_names.txt --read-to-ctg {input.readtoctg}
 samtools fqidx -r read_names.txt {input.fq} > reads.fastq
 samtools faidx -r ref_names.txt {input.fa}  > ref.fasta
-minimap2 -a -x map-pb -t 1 ref.fasta reads.fastq | samtools view -bS -F 1796 > aln.bam
+pbmm2 align -j 1 --preset CCS --sort ref.fasta reads.fastq | samtools view -bS -F 1796 > aln.bam
 """
 
 TASK_POLISH_PREAMBLE="""
@@ -187,7 +189,7 @@ TASK_READ_PHASING = """
 
         python3 -m falcon_unzip.proto.extract_phased_preads --ctg-id {params.ctg} --preads ../../../../1-preads_ovl/db2falcon/preads4falcon.fasta --rid-phase-map {output.M} --out proto/preads.fasta
 
-        time minimap2 -a -x map-pb -t 1 proto/ref.fa proto/preads.fasta > proto/preads.sam
+        time pbmm2 align --preset CCS --sort -j 1 proto/ref.fa proto/preads.fasta | samtools view  > proto/preads.sam
 """
 
 
@@ -199,13 +201,10 @@ TASK_READNAME_LOOKUP = """
        paste <(DBdump -hr ../../1-preads_ovl/build/preads.db | grep "^L" ) <(DBdump -hr ../../1-preads_ovl/build/preads.db | grep "^H" ) | perl -lane '$ln = sprintf("%09d", $. -1); @Z = split /\s+/, $_; print "$ln\t$Z[-1]/$Z[1]/ccs"' > {output.readname_lookup}
 """
 
-TASK_SORT = """
-        samtools sort -@ {params.pypeflow_nproc} -o {output.OBAMS} {input.IBAMA}
-        samtools index {output.OBAMS}
-        samtools view -F 3844 {output.OBAMS}  | perl -lane '$F[2] =~ s/\-.*//; print "$F[0] $F[2]"' > {output.RID_TO_CTG}
-"""
 TASK_MAP = """
-        minimap2 -a -x map-pb -t {params.pypeflow_nproc} {input.T} {input.R} | samtools view -F 3840 -bS > {output.OBAMA}
+        time pbmm2 align --sort --preset CCS -j {params.pypeflow_nproc} {input.T} {input.R} | samtools view -F 3840 -bS > {output.OBAMA}
+        time samtools index {output.OBAMA}
+        time samtools view -F 3844 {output.OBAMA}  | perl -lane '$F[2] =~ s/\-.*//; print "$F[0] $F[2]"' > {output.RID_TO_CTG}
 """
 TASK_PREAMBLE = """
         cat {input.P} {input.A} > {output.FA}
@@ -280,7 +279,7 @@ def run_workflow(wf, config, unzip_config_fn):
     top.fai2ctgs(p_ctg_fai_fn, 'CTGS.json')
     CTGS = io.deserialize('CTGS.json')  # currently in top-dir
 
-    rid_to_ctg = "./3-unzip/sorting/rid_to_cgt.txt"
+    rid_to_ctg = "./3-unzip/mapping/rid_to_cgt.txt"
 
     wf.addTask(gen_task(
             script=TASK_MAP,
@@ -289,33 +288,21 @@ def run_workflow(wf, config, unzip_config_fn):
                 "R": ifastq_fn,
             },
             outputs={
-                "OBAMA": "3-unzip/mapping/reads_mapped.bam",
-            },
-            parameters={},
-            dist=dist_high,
-    ))
-
-
-    wf.addTask(gen_task(
-            script=TASK_SORT,
-            inputs={
-                "IBAMA"      : "3-unzip/mapping/reads_mapped.bam",
-            },
-            outputs={
-                "OBAMS"  : "3-unzip/sorting/reads_mapped.sorted.bam",
-                "OBAMSAI": "3-unzip/sorting/reads_mapped.sorted.bam.bai",
+                "OBAMA": "3-unzip/mapping/reads_mapped.sorted.bam",
+                "OBAMSAI": "3-unzip/mapping/reads_mapped.sorted.bam.bai",
                 "RID_TO_CTG" : rid_to_ctg,
             },
             parameters={},
             dist=dist_high,
     ))
 
+
     readname_lookup = "3-unzip/readnames/readname_lookup.txt"
 
     wf.addTask(gen_task(
             script=TASK_READNAME_LOOKUP,
             inputs={
-                "OBAMSAI": "3-unzip/sorting/reads_mapped.sorted.bam.bai",
+                "OBAMSAI": "3-unzip/mapping/reads_mapped.sorted.bam.bai",
             },
             outputs={
                 'readname_lookup'  : readname_lookup,
@@ -336,7 +323,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 "ACTG": a_ctg_fn,
                 "PTILE": p_tile_fn,
                 "ATILE": a_tile_fn,
-                "BAM": "3-unzip/sorting/reads_mapped.sorted.bam",
+                "BAM": "3-unzip/mapping/reads_mapped.sorted.bam",
                 "T": "3-unzip/ctgs/concat.fa",
                 "readname_lookup" : readname_lookup,
                 "RID_TO_CTG"      : rid_to_ctg,
