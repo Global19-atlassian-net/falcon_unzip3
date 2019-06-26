@@ -9,6 +9,12 @@ import os
 
 LOG = logging.getLogger(__name__)
 
+TASK_GATHER_POLISH="""
+python3 -m falcon_unzip.mains.polish_gather --all-ctgs-json {input.FNS} --p-ctg-fn polished_p_ctgs.fa --h-ctg-fn polished_h_ctgs.fa
+samtools faidx {output.FP}
+samtools faidx {output.FH}
+"""
+
 TASK_POLISH="""
 ## gathering phased and unphased reads
 samtools faidx {input.FA} {params.ctg} > ref.fasta
@@ -202,14 +208,13 @@ TASK_READNAME_LOOKUP = """
 """
 
 TASK_MAP = """
-        time pbmm2 align --sort --preset CCS -j {params.pypeflow_nproc} {input.T} {input.R} | samtools view -F 3840 -bS > {output.OBAMA}
-        time samtools index {output.OBAMA}
-        time samtools view -F 3844 {output.OBAMA}  | perl -lane '$F[2] =~ s/\-.*//; print "$F[0] $F[2]"' > {output.RID_TO_CTG}
+        time pbmm2 align --sort --preset CCS -j {params.pypeflow_nproc} {input.T} {input.R} | samtools view -F 3840 -bS > {output.BAM}
+        time samtools index {output.BAM}
+        time samtools view -F 3844 {output.BAM}  | perl -lane '$F[2] =~ s/\-.*//; print "$F[0] $F[2]"' > {output.RID_TO_CTG}
 """
 TASK_PREAMBLE = """
         cat {input.P} {input.A} > {output.FA}
         samtools faidx {output.FA}
-        samtools faidx {input.P}
 """
 
 
@@ -234,7 +239,7 @@ def run_workflow(wf, config, unzip_config_fn):
     a_tile_fn = os.path.join(asm_dir, 'a_ctg_tiling_path')
 
     # Typical job-dist configuration
-    dist_low = Dist(
+    dist_default = Dist(
         job_dict=config['job.defaults'],
         use_tmpdir=False, # until we fix a bug in pypeflow
     )
@@ -264,6 +269,11 @@ def run_workflow(wf, config, unzip_config_fn):
         use_tmpdir=False, # until we fix a bug in pypeflow
     )
 
+
+    '''
+    In this task we combine the p and a ctg files into one and index it with samtools faidx.
+    '''
+
     p_ctg_fai_fn = "./2-asm-falcon/p_ctg.fa.fai"
 
     wf.addTask(gen_task(
@@ -282,11 +292,20 @@ def run_workflow(wf, config, unzip_config_fn):
 
     wf.refreshTargets()
 
-    top.fai2ctgs(p_ctg_fai_fn, 'CTGS.json')
-    CTGS = io.deserialize('CTGS.json')  # currently in top-dir
+    top.fai2ctgs(p_ctg_fai_fn, '3-unzip/ctg_tracking/CTGS.json')
+    CTGS = io.deserialize('3-unzip/ctg_tracking/CTGS.json')  # currently in top-dir
 
-    rid_to_ctg = "./3-unzip/mapping/rid_to_cgt.txt"
+    '''
+    In this task we use pbmm2 to map all the fastq records to the combined p&a ctgs.
+     - Secondary, chimeric, duplicates are filtered out
+     - pbmm2 sorts the alignments
+    '''
 
+    mapped_reads       = "3-unzip/mapping/reads_mapped.sorted.bam"
+    mapped_reads_index = "3-unzip/mapping/reads_mapped.sorted.bam.bai"
+    rid_to_ctg         = "./3-unzip/mapping/rid_to_cgt.txt"
+
+    
     wf.addTask(gen_task(
             script=TASK_MAP,
             inputs={
@@ -294,21 +313,25 @@ def run_workflow(wf, config, unzip_config_fn):
                 "R": ifastq_fn,
             },
             outputs={
-                "OBAMA": "3-unzip/mapping/reads_mapped.sorted.bam",
-                "OBAMSAI": "3-unzip/mapping/reads_mapped.sorted.bam.bai",
+                "BAM": mapped_reads,
+                "BAI": mapped_reads_index,
                 "RID_TO_CTG" : rid_to_ctg,
             },
             parameters={},
             dist=dist_high,
     ))
 
-
     readname_lookup = "3-unzip/readnames/readname_lookup.txt"
 
+
+    '''
+    In this task the pread databases are dumped two different way to reconstitute to build a mapping of read ID <-> DB id
+    '''
+    
     wf.addTask(gen_task(
             script=TASK_READNAME_LOOKUP,
             inputs={
-                "OBAMSAI": "3-unzip/mapping/reads_mapped.sorted.bam.bai",
+                "BAI": mapped_reads_index
             },
             outputs={
                 'readname_lookup'  : readname_lookup,
@@ -319,6 +342,10 @@ def run_workflow(wf, config, unzip_config_fn):
 
     collected = dict()
 
+    '''
+    Reads are phased in this task.
+    '''
+    
     for ctg in CTGS:
         rid_to_phase_fn = "3-unzip/0-phasing/{}/uow-fake/rid_to_phase".format(ctg)
         collected['ctg' + ctg] = rid_to_phase_fn
@@ -347,6 +374,10 @@ def run_workflow(wf, config, unzip_config_fn):
 
     check(sorted(collected.values()), sorted(glob.glob('3-unzip/0-phasing/*/uow-fake/rid_to_phase')))
 
+    '''
+    This task gathers the phasing information and condenses it to a single file.
+    '''
+    
     concatenated_rid_to_phase_fn = "3-unzip/0-phasing/gathered-rid-to-phase/rid_to_phase.all"
     gathered_rid_to_phase_json   = "3-unzip/0-phasing/gathered-rid-to-phase/gathered.json"
 
@@ -378,7 +409,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 'p_ctg': hasm_p_ctg_fn,
             },
             parameters={},
-            dist=dist_low,
+            dist=dist_default,
     ))
 
     g2h_all_units_fn = './3-unzip/2-htigs/split/all-units-of-work.json'
@@ -444,11 +475,11 @@ def run_workflow(wf, config, unzip_config_fn):
             dist=dist_one,
     ))
 
-    combined_ph = "./4-polishing/input/combined_ph.fa"
-    combined_ph_fai = "./4-polishing/input/combined_ph.fa.fai"
-    combined_eg = "./4-polishing/input/combined_edges.txt"
-    readtoctg   = "./4-polishing/input/read2ctg.txt"
-    ofastq_fn   = "./4-polishing/input/preamble.fastq"
+    combined_ph     = "./4-polish/input/combined_ph.fa"
+    combined_ph_fai = "./4-polish/input/combined_ph.fa.fai"
+    combined_eg     = "./4-polish/input/combined_edges.txt"
+    readtoctg       = "./4-polish/input/read2ctg.txt"
+    ofastq_fn       = "./4-polish/input/preamble.fastq"
 
     wf.addTask(gen_task(
         script=TASK_POLISH_PREAMBLE,
@@ -475,11 +506,11 @@ def run_workflow(wf, config, unzip_config_fn):
     collected = dict()
 
     unzip_p_ctg_fai_fn = "3-unzip/all_p_ctg.fa.fai"
-    top.fai2ctgs(unzip_p_ctg_fai_fn, 'PUCTGS.json')
-    PUCTGS = io.deserialize('PUCTGS.json')  # currently in top-dir
+    top.fai2ctgs(unzip_p_ctg_fai_fn, '3-unzip/ctg_tracking/PUCTGS.json')
+    PUCTGS = io.deserialize('3-unzip/ctg_tracking/PUCTGS.json')  # currently in top-dir
 
     for ctg in PUCTGS:
-        fn = '4-polishing/temp-unphased/{}/aln.bam'.format(ctg)
+        fn = '4-polish/temp-unphased/{}/aln.bam'.format(ctg)
         collected['ctg'+ctg] = fn
         wf.addTask(gen_task(
             script=TASK_PLACE_UNPHASED,
@@ -500,7 +531,7 @@ def run_workflow(wf, config, unzip_config_fn):
 
     wf.refreshTargets()
 
-    merged_unphased = "4-polishing/merged-unphased/merged_unphased.sorted.bam"
+    merged_unphased = "4-polish/merged-unphased/merged_unphased.sorted.bam"
 
     wf.addTask(gen_task(
         script=TASK_GATHER_UNPHASED,
@@ -517,9 +548,9 @@ def run_workflow(wf, config, unzip_config_fn):
     PH = top.getPH(combined_ph_fai, readtoctg)
 
     fns = list()
-    LOG.info('len(PH)={}, {!r}'.format(len(PH), dist_low))
+    LOG.info('len(PH)={}, {!r}'.format(len(PH), dist_default))
     for ctg in PH:
-        fn = "4-polishing/temp-phased/{}/{}.polished.fa".format(ctg, ctg)
+        fn = "4-polish/temp-phased/{}/{}.polished.fa".format(ctg, ctg)
         fns.append(fn)
         wf.addTask(gen_task(
             script=TASK_POLISH,
@@ -535,32 +566,31 @@ def run_workflow(wf, config, unzip_config_fn):
             parameters={
                 'ctg': ctg,
             },
-            dist=dist_low,
+            dist=dist_default,
         ))
 
     wf.refreshTargets()
 
-    # TODO: Someday this needs to be its own task.
-    h_ctg_fn = 'h_ctg.polished.fa'
-    p_ctg_fn = 'p_ctg.polished.fa'
-    io.touch(h_ctg_fn)
-    io.touch(p_ctg_fn)
-    for fn in fns:
-        if is_haplotig(fn):
-            call = 'cat {} >> {}'.format(fn, h_ctg_fn)
-        else:
-            call = 'cat {} >> {}'.format(fn, p_ctg_fn)
-        io.syscall(call)
+    final_ctgs  ='../ctg_tracking/polished.json'
+    final_p_ctgs_fn='4-polish/cns-output/polished_p_ctgs.fa'
+    final_h_ctgs_fn='4-polish/cns-output/polished_h_ctgs.fa'
+    
+    io.serialize(final_ctgs, fns)
 
-def is_haplotig(fn):
-    """
-    >>> is_haplotig('/a/foo_bar.fa')
-    True
-    >>> is_haplotig('/a/foo.fa')
-    False
-    """
-    return '_' in os.path.basename(fn)
-
+    wf.addTask(gen_task(
+        script=TASK_GATHER_POLISH,
+        inputs={
+            "FNS" : final_ctgs,
+        },
+        outputs={
+            "FP": final_p_ctgs_fn,
+            "FH": final_h_ctgs_fn,
+        },
+        dist=dist_one,
+    ))
+    
+    wf.refreshTargets()
+    
 def check(a, b):
     """Simple runtime equality checking.
     """
