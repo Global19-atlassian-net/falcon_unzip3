@@ -475,11 +475,11 @@ def run_workflow(wf, config, unzip_config_fn):
             dist=dist_one,
     ))
 
-    combined_ph     = "./4-polishing/input/combined_ph.fa"
-    combined_ph_fai = "./4-polishing/input/combined_ph.fa.fai"
-    combined_eg     = "./4-polishing/input/combined_edges.txt"
-    readtoctg       = "./4-polishing/input/read2ctg.txt"
-    ofastq_fn       = "./4-polishing/input/preamble.fastq"
+    combined_ph     = "./4-polish/input/combined_ph.fa"
+    combined_ph_fai = "./4-polish/input/combined_ph.fa.fai"
+    combined_eg     = "./4-polish/input/combined_edges.txt"
+    readtoctg       = "./4-polish/input/read2ctg.txt"
+    ofastq_fn       = "./4-polish/input/preamble.fastq"
 
     wf.addTask(gen_task(
         script=TASK_POLISH_PREAMBLE,
@@ -510,7 +510,7 @@ def run_workflow(wf, config, unzip_config_fn):
     PUCTGS = io.deserialize('3-unzip/ctg_tracking/PUCTGS.json')  # currently in top-dir
 
     for ctg in PUCTGS:
-        fn = '4-polishing/temp-unphased/{}/aln.bam'.format(ctg)
+        fn = '4-polish/temp-unphased/{}/aln.bam'.format(ctg)
         collected['ctg'+ctg] = fn
         wf.addTask(gen_task(
             script=TASK_PLACE_UNPHASED,
@@ -531,7 +531,7 @@ def run_workflow(wf, config, unzip_config_fn):
 
     wf.refreshTargets()
 
-    merged_unphased = "4-polishing/merged-unphased/merged_unphased.sorted.bam"
+    merged_unphased = "4-polish/merged-unphased/merged_unphased.sorted.bam"
 
     wf.addTask(gen_task(
         script=TASK_GATHER_UNPHASED,
@@ -550,7 +550,7 @@ def run_workflow(wf, config, unzip_config_fn):
     fns = list()
     LOG.info('len(PH)={}, {!r}'.format(len(PH), dist_default))
     for ctg in PH:
-        fn = "4-polishing/temp-phased/{}/{}.polished.fa".format(ctg, ctg)
+        fn = "4-polish/temp-phased/{}/{}.polished.fa".format(ctg, ctg)
         fns.append(fn)
         wf.addTask(gen_task(
             script=TASK_POLISH,
@@ -572,8 +572,8 @@ def run_workflow(wf, config, unzip_config_fn):
     wf.refreshTargets()
 
     final_ctgs  ='../ctg_tracking/polished.json'
-    final_p_ctgs_fn='4-polishing/final/polished_p_ctgs.fa'
-    final_h_ctgs_fn='4-polishing/final/polished_h_ctgs.fa'
+    final_p_ctgs_fn='4-polish/cns-output/polished_p_ctgs.fa'
+    final_h_ctgs_fn='4-polish/cns-output/polished_h_ctgs.fa'
     
     io.serialize(final_ctgs, fns)
 
