@@ -252,8 +252,8 @@ def run_workflow(wf, config, unzip_config_fn):
     )
 
     # 1-proc high mem jobs like htig
-    dist_mem = Dist(
-        job_dict=config['job.mem'],
+    dist_highmem = Dist(
+        job_dict=config['job.highmem'],
         use_tmpdir=False, # until we fix a bug in pypeflow
     )
 
@@ -397,7 +397,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 'bash_template': dummy_fn,
             },
             parameters={},
-            dist = dist_mem,
+            dist = dist_highmem,
     ))
 
     wf.refreshTargets()
@@ -422,7 +422,7 @@ def run_workflow(wf, config, unzip_config_fn):
             },
             parameters={},
         ),
-        dist=dist_mem,  # single-threads for now
+        dist=dist_highmem,  # single-threads for now
         run_script=TASK_GTOH_APPLY_UNITS_OF_WORK,
     )
 
