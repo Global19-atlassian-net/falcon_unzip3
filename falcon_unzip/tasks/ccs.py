@@ -251,6 +251,12 @@ def run_workflow(wf, config, unzip_config_fn):
         use_tmpdir=False, # until we fix a bug in pypeflow
     )
 
+    # 1-proc high mem jobs like htig
+    dist_highmem = Dist(
+        job_dict=config['job.highmem'],
+        use_tmpdir=False, # until we fix a bug in pypeflow
+    )
+
     # For strictly local jobs, use this.
     dist_local = Dist(
         local=True,
@@ -391,7 +397,7 @@ def run_workflow(wf, config, unzip_config_fn):
                 'bash_template': dummy_fn,
             },
             parameters={},
-            dist = dist_high,
+            dist = dist_highmem,
     ))
 
     wf.refreshTargets()
@@ -416,7 +422,7 @@ def run_workflow(wf, config, unzip_config_fn):
             },
             parameters={},
         ),
-        dist=dist_one,  # single-threads for now
+        dist=dist_highmem,  # single-threads for now
         run_script=TASK_GTOH_APPLY_UNITS_OF_WORK,
     )
 
