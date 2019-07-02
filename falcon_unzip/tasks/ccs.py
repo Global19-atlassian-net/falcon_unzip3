@@ -571,7 +571,7 @@ def run_workflow(wf, config, unzip_config_fn):
 
     wf.refreshTargets()
 
-    final_ctgs  ='../ctg_tracking/polished.json'
+    final_ctgs  ='4-polish/ctg_tracking/polished.json'
     final_p_ctgs_fn='4-polish/cns-output/polished_p_ctgs.fa'
     final_h_ctgs_fn='4-polish/cns-output/polished_h_ctgs.fa'
     
