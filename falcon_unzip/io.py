@@ -67,7 +67,7 @@ def validate_config(config):
     ]
     LOG.info('PATH={}'.format(os.environ['PATH']))
     try:
-        syscall('which')
+        syscall('which ls')
     except Exception:
         LOG.warning('Could not find "which" command. Skipping checks for "blasr", etc.')
         return
