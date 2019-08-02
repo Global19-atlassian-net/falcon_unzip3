@@ -24,14 +24,16 @@ def run(lookup, rid_to_phase, rid_to_ctg, output, ctg):
     with open(rid_to_phase, 'r') as mf:
         for line in mf:
             lc = line.strip().split(" ")
-            out.write("%s %s %s %s\n" % (nameLookup[lc[0]], lc[1], lc[2], lc[3]))
-            seen[lc[0]] = 1
+            if lc[0] in nameLookup:
+                out.write("%s %s %s %s\n" % (nameLookup[lc[0]], lc[1], lc[2], lc[3]))
+                seen[lc[0]] = 1
 
     with open(rid_to_ctg, 'r') as rctg:
         for line in rctg:
             lc = line.strip().split(" ")
-            if lc[0] not in seen:
-                out.write("%s %s %s %s\n" % (nameLookup[lc[0]], ctg, -1, 0))
+            if lc[0] in nameLookup:
+                if lc[0] not in seen:
+                    out.write("%s %s %s %s\n" % (nameLookup[lc[0]], ctg, -1, 0))
 
 
 def parse_args(argv):
