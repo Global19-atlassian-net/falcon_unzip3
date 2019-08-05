@@ -31,7 +31,7 @@ def ccs_all(config, unzip_config_fn):
     if 'job.high' not in config:
         config['job.high'] = dict(job_defaults)
         LOG.info('Missing "job.high" section; using "job.defaults" there.')
-    if 'job.mem' not in config:
+    if 'job.highmem' not in config:
         config['job.highmem'] = dict(job_defaults)
         LOG.info('Missing "job.highmem" section; using "job.defaults" there.')
     use_tmpdir = job_defaults['use_tmpdir'] # None/False is fine.
