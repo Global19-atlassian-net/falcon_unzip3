@@ -2,38 +2,54 @@
 This script rescues unphased reads.
 """
 import argparse
-import logging
-import os
 import sys
 
 def run(lookup, rid_to_phase, rid_to_ctg, output, ctg):
-    """Convert a CCS read name to a DazDB ID. Also add in unphased reads at the end."""
+    """Convert a CCS read name to a DazDB ID. Also add in unphased reads at the end.
+    """
     nameLookup = {}
     with open(lookup, 'r') as lf:
         for line in lf:
             lc = line.strip().split("\t")
             nameLookup[lc[1]] = lc[0]
 
-    out = open(output, 'w')
+    # 'output' has the same format as the rid_to_phase file. (See below.)
 
+    with open(output, 'w') as out:
+        with open(rid_to_phase, 'r') as mf:
+            seen = write_rid_to_phase(out, mf, nameLookup)
+        with open(rid_to_ctg, 'r') as rctg:
+            write_rid_to_ctg(out, rctg, nameLookup, seen, ctg)
+
+
+def write_rid_to_phase(out, mf, nameLookup):
+    """Write phased reads.
+    Read from 'mf', using only reads from 'nameLookup'.
+    Write into 'out'.
+    """
     seen = {}
 
     #rid_to phase file contains four columns (white space split): DAZdb_ID primary_ctg phase_block phase
     #000322297 000000F 9000023 1
 
-    with open(rid_to_phase, 'r') as mf:
-        for line in mf:
-            lc = line.strip().split(" ")
-            if lc[0] in nameLookup:
-                out.write("%s %s %s %s\n" % (nameLookup[lc[0]], lc[1], lc[2], lc[3]))
-                seen[lc[0]] = 1
+    for line in mf:
+        lc = line.strip().split(" ")
+        if lc[0] in nameLookup:
+            out.write("%s %s %s %s\n" % (nameLookup[lc[0]], lc[1], lc[2], lc[3]))
+            seen[lc[0]] = 1
+    return seen
 
-    with open(rid_to_ctg, 'r') as rctg:
-        for line in rctg:
-            lc = line.strip().split(" ")
-            if lc[0] in nameLookup:
-                if lc[0] not in seen:
-                    out.write("%s %s %s %s\n" % (nameLookup[lc[0]], ctg, -1, 0))
+
+def write_rid_to_ctg(out, rctg, nameLookup, seen, ctg):
+    """Write unphased reads.
+    Read from 'rctg', using only reads from 'nameLookup'.
+    Write into 'out'
+    """
+    for line in rctg:
+        lc = line.strip().split(" ")
+        if lc[0] in nameLookup:
+            if lc[0] not in seen:
+                out.write("%s %s %s %s\n" % (nameLookup[lc[0]], ctg, -1, 0))
 
 
 def parse_args(argv):
@@ -42,7 +58,9 @@ def parse_args(argv):
         description=description,
     )
     parser.add_argument(
-        '--lookup', required=True, help='The CCS name ID lookup (%%08d <-> CCS)'
+        '--lookup',
+        required=True,
+        help='The CCS name ID lookup (%%08d <-> CCS)'
     )
     parser.add_argument(
         '--rid-to-phase',
@@ -71,7 +89,6 @@ def parse_args(argv):
 
 def main(argv=sys.argv):
     args = parse_args(argv)
-    logging.basicConfig(level=logging.INFO)
     run(**vars(args))
 
 
