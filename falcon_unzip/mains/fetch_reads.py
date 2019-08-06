@@ -51,11 +51,11 @@ def fetch_ref_and_reads(
 
             io.mkdirs(os.path.join(out_dir, ctg_id))
             if ctg_id != 'all':
-                ref_out = open(os.path.join(out_dir, ctg_id, 'ref.fa'), 'w')
+                ref_out = open(os.path.join(out_dir, ctg_id, 'ref.fasta'), 'w')
             else:
                 # TODO(CD): Check when s_id != ctg_id
                 io.mkdirs(os.path.join(out_dir, s_id))
-                ref_out = open(os.path.join(out_dir, s_id, 'ref.fa'), 'w')
+                ref_out = open(os.path.join(out_dir, s_id, 'ref.fasta'), 'w')
 
             print('>%s' % s_id, file=ref_out)
             print(s.sequence, file=ref_out)
@@ -96,10 +96,10 @@ def fetch_ref_and_reads(
         """A convenient closure, with a contextmanager."""
         io.mkdirs(os.path.join(out_dir, ctg_id))
         if ctg_id not in read_out_files:
-            read_out = open(os.path.join(out_dir, ctg_id, 'reads.fa'), 'w')
+            read_out = open(os.path.join(out_dir, ctg_id, 'reads.fasta'), 'w')
             read_out_files[ctg_id] = 1
         else:
-            read_out = open(os.path.join(out_dir, ctg_id, 'reads.fa'), 'a')
+            read_out = open(os.path.join(out_dir, ctg_id, 'reads.fasta'), 'a')
         yield read_out
         read_out.close()
 
@@ -132,12 +132,12 @@ def fetch_ref_and_reads(
                 LOG.info('Skipping contig: {}. Reason: ignoring small circular contigs.'.format(ctg_id))
                 continue
 
-            reads_fa_path = os.path.join(out_dir, ctg_id, 'reads.fa')
+            reads_fa_path = os.path.join(out_dir, ctg_id, 'reads.fasta')
             if not io.check_nonempty_file_exists(reads_fa_path):
                 LOG.info('Skipping contig: {}. Reason: non-existent or empty reads file ({}).'.format(ctg_id, reads_fa_path))
                 continue
 
-            ref_fa_path = os.path.join(out_dir, ctg_id, 'ref.fa')
+            ref_fa_path = os.path.join(out_dir, ctg_id, 'ref.fasta')
             if not io.check_nonempty_file_exists(ref_fa_path):
                 LOG.info('Skipping contig: {}. Reason: non-existent or empty ref file ({}).'.format(ctg_id, ref_fa_path))
                 continue
@@ -145,7 +145,7 @@ def fetch_ref_and_reads(
             print(ctg_id, file=f)
 
 def parse_args(argv):
-    description = 'Using the read to contig mapping data, to partition the reads (into {ctg_id}_reads.fa and {ctg_id}_ref.fa) grouped by contigs.'
+    description = 'Using the read to contig mapping data, to partition the reads (into {ctg_id}_reads.fasta and {ctg_id}_ref.fasta) grouped by contigs.'
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
@@ -155,7 +155,7 @@ def parse_args(argv):
         '--base-dir', type=str, default='../..',
         help='the base working dir of a falcon assembly')
     parser.add_argument(
-        '--p-ctg-fn', type=str, default='{base_dir}/2-asm-falcon/p_ctg.fa',
+        '--p-ctg-fn', type=str, default='{base_dir}/2-asm-falcon/p_ctg.fasta',
         help='Primary contigs of falcon assembly. (FASTA)')
     parser.add_argument(
         '--fofn', type=str, default='../../input.fofn',
@@ -166,7 +166,7 @@ def parse_args(argv):
     parser.add_argument(
         '--min-ctg-lenth', default=20000, type=int,
         help='the minimum length of the contig for the outputs')
-    #parser.add_argument('--ctg_fa', type=str, default='./2-asm-falcon/p_ctg.fa', help='path to the contig fasta file')
+    #parser.add_argument('--ctg_fa', type=str, default='./2-asm-falcon/p_ctg.fasta', help='path to the contig fasta file')
     # we can run this in parallel mode in the furture
     # parser.add_argument('--n_core', type=int, default=4,
     #                    help='number of processes used for generating consensus')

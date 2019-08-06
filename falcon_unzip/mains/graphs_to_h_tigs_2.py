@@ -1,7 +1,7 @@
 """
 I think this has implicit dependencies:
 * 3-unzip/2-hasm/p_ctg_tiling_path
-* 2-falcon/p_ctg.fa
+* 2-falcon/p_ctg.fasta
 * 2-falcon/sg_edges
 * 3-unzip/2-hasm/sg_edges
 """
@@ -99,11 +99,11 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
                                 proto_dir, min_query_span, min_target_span, logger):
     """
     ctg_id              - string
-    p_ctg_seq           - string, primary contig from 2-asm-falcon/p_ctg.fa
+    p_ctg_seq           - string, primary contig from 2-asm-falcon/p_ctg.fasta
     p_ctg_tiling_path   - List of tiling path edges from 2-asm-falcon/p_ctg_tiling_path for this particular ctg_id.
     sg_edges            - List of all SG edges for this particular contig, from 3-unzip/1-hasm/sg_edges_list. Needs
                           to contain reverse edges too (the main reason this is needed).
-    snp_haplotigs       - Dict of: snp_haplotigs[htig.name] = Haplotig(...), loaded from 3-unzip/1-hasm/p_ctg.fa,
+    snp_haplotigs       - Dict of: snp_haplotigs[htig.name] = Haplotig(...), loaded from 3-unzip/1-hasm/p_ctg.fasta,
                           and marked with the correct phase.
     allow_multiple_primaries    - True or False. Will raise if False and there are multiple graph
                                   components in the haplotig graph.
@@ -111,7 +111,7 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
     proto_dir           - Folder from the phasing stage for the corresponding contig used for input,
                           i.e. 3-unzip/0-phasing/{ctg_id}/proto.
                           Files needed from this folder are: `minced.fasta`,
-                          `phase_relation_graph.gexf`, `ref.fa` and `regions.json`.
+                          `phase_relation_graph.gexf`, `ref.fasta` and `regions.json`.
 
     To reproduce a run, the input data which is not available in proto dir can now be loaded from:
         os.path.join(out_dir, 'repro.input.snp_haplotigs.json')
@@ -236,7 +236,7 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
 
     if snp_haplotigs:
         # BLASR crashes on empty files, so address that.
-        p_ctg_fn = os.path.join(proto_dir, 'ref.fa')
+        p_ctg_fn = os.path.join(proto_dir, 'ref.fasta')
         blasr_params = '--minMatch 15 --maxMatch 25 --advanceHalf --advanceExactMatches 10 --bestn 1 --nproc {} --noSplitSubreads'.format(num_threads)
         excomm('blasr {} {} {} --sam --out {}.tmp.sam'.format(
                 blasr_params, aln_snp_hasm_ctg_path, p_ctg_fn, mapping_out_prefix))
@@ -351,7 +351,7 @@ def load_haplotigs(hasm_falcon_path, all_flat_rid_to_phase):
     p_tiling_paths = os.path.join(hasm_falcon_path, 'p_ctg_tiling_path')
     tiling_paths = tiling_path.load_tiling_paths(p_tiling_paths, contig_lens=None, whitelist_seqs=None)
 
-    p_ctg_fasta = os.path.join(hasm_falcon_path, 'p_ctg.fa')
+    p_ctg_fasta = os.path.join(hasm_falcon_path, 'p_ctg.fasta')
     hasm_p_ctg_seqs = load_all_seq(p_ctg_fasta)
 
     LOG.info('Loading haplotigs.')
@@ -680,7 +680,7 @@ def create_diploid_regions(fragmented_snp_haplotigs, fp_proto_log):
     Any region which is covered by only 1 haplotig is also filtered out.
 
     This method returns a list of diploid regions, where each haplotig in the region
-    perfectly aligns to the start/end coordinates on the p_ctg.fa.
+    perfectly aligns to the start/end coordinates on the p_ctg.fasta.
     """
 
     ret_diploid_regions = []
@@ -1158,11 +1158,11 @@ def find_haplotig_placement(haplotig_graph,
 def extract_unzipped_ctgs(ctg_id, haplotig_graph, allow_multiple_primaries, fp_proto_log):
     """
     Finds an arbitrary (shortest) walk down the haplotig DAG, and denotes it
-    as "p_ctg.fa".
+    as "p_ctg.fasta".
     "Shortest" is defined in terms of weighted shortest path, where weight is given
     by the notion of "cross-phase" edges.
     It then removes all p_ctg edges from the graph, and all cross-edges,
-    and outputs all other weakly connected components as haplotigs in "h_ctg.fa"
+    and outputs all other weakly connected components as haplotigs in "h_ctg.fasta"
     """
 
     fp_proto_log('Beginning to extract all p_ctg and h_ctg.')
@@ -1295,7 +1295,7 @@ def write_unzipped(out_dir, ctg_id, p_ctg_seqs, p_ctg_edges, h_ctg_seqs, h_ctg_e
             fp_proto_log('[write_unzipped] Sequence "{seq_name}" has no placement. This is not critical and will not be added to blacklist, but worth noting.'.format(seq_name=seq_name))
             # blacklist.add(seq_name)
 
-    with open(os.path.join(out_dir, "p_ctg.%s.fa" % ctg_id), "w") as fp_out:
+    with open(os.path.join(out_dir, "p_ctg.%s.fasta" % ctg_id), "w") as fp_out:
         for seq_name in sorted(p_ctg_seqs.keys()):
             if seq_name in blacklist:
                 continue
@@ -1310,7 +1310,7 @@ def write_unzipped(out_dir, ctg_id, p_ctg_seqs, p_ctg_edges, h_ctg_seqs, h_ctg_e
             edges = p_ctg_edges[seq_name]
             fp_out.write('\n'.join(edges))
             fp_out.write('\n')
-    with open(os.path.join(out_dir, "h_ctg.%s.fa" % ctg_id), "w") as fp_out:
+    with open(os.path.join(out_dir, "h_ctg.%s.fasta" % ctg_id), "w") as fp_out:
         for seq_name in sorted(h_ctg_seqs.keys()):
             if seq_name in blacklist:
                 continue
@@ -1405,7 +1405,7 @@ def define_globals(args):
 
     # Load the primary contig sequences.
     LOG.info('Loading the 2-asm-falcon primary contigs.')
-    p_ctg_seqs = load_all_seq(os.path.join(fc_asm_path, "p_ctg.fa"))
+    p_ctg_seqs = load_all_seq(os.path.join(fc_asm_path, "p_ctg.fasta"))
     LOG.info('Done loading 2-asm-falcon primary contigs.')
 
     LOG.info('Loading tiling paths.')
@@ -1476,7 +1476,7 @@ def cmd_apply(args):
         result = run_generate_haplotigs_for_ctg(exe)
 
         # We could specify this to 'run_gen', but for now it is an implicit output.
-        output_h_ctg_fn = os.path.join(out_dir, 'h_ctg.{}.fa'.format(ctg_id))
+        output_h_ctg_fn = os.path.join(out_dir, 'h_ctg.{}.fasta'.format(ctg_id))
         assert os.path.exists(output_h_ctg_fn), 'Missing h_ctg fasta: {!r}'.format(
                 os.path.abspath(output_h_ctg_fn))
 
@@ -1506,7 +1506,7 @@ def cmd_split(args):
     define_globals(args)
 
     #TODO remove hard coded path to FAI
-    falcon_p_ctg_fai_fn = "../../../2-asm-falcon/p_ctg.fa.fai"
+    falcon_p_ctg_fai_fn = "../../../2-asm-falcon/p_ctg.fasta.fai"
     top.fai2ctgs(falcon_p_ctg_fai_fn, '3-unzip/2-htigs/split/p_ctg_names.json')
     pnames = io.deserialize('3-unzip/2-htigs/split/p_ctg_names.json') 
     ctg_id_list = list(pnames)
@@ -1541,7 +1541,7 @@ def cmd_split(args):
     io.serialize(split_fn, uows)
 
 def generate_h_ctg_ids(run_dir, ctg_id):
-    cmd = 'grep ">" ./h_ctg.{ctg_id}.fa | sed "s/^>//" >| ./h_ctg_ids.{ctg_id}'.format(
+    cmd = 'grep ">" ./h_ctg.{ctg_id}.fasta | sed "s/^>//" >| ./h_ctg_ids.{ctg_id}'.format(
             **locals())
     with cd(run_dir):
         execute.execute_command(cmd, LOG)
@@ -1564,15 +1564,15 @@ def cmd_combine(args):
         run_dir = os.path.dirname(h_ctg_fn)
         ctg_id = result['ctg_id']
         combined['h_ctg'].append(h_ctg_fn)
-        combined['p_ctg'].append(os.path.join(run_dir, 'p_ctg.{}.fa'.format(ctg_id)))
+        combined['p_ctg'].append(os.path.join(run_dir, 'p_ctg.{}.fasta'.format(ctg_id)))
         combined['h_ctg_ids'].append(os.path.join(run_dir, 'h_ctg_ids.{}'.format(ctg_id)))
         combined['h_ctg_edges'].append(os.path.join(run_dir, 'h_ctg_edges.{}'.format(ctg_id)))
         combined['p_ctg_edges'].append(os.path.join(run_dir, 'p_ctg_edges.{}'.format(ctg_id)))
         combined['h_ctg_placement'].append(os.path.join(run_dir, 'h_ctg.{}.paf'.format(ctg_id)))
         generate_h_ctg_ids(run_dir, ctg_id)
-    with open('all_h_ctg.fa', 'w') as stream:
+    with open('all_h_ctg.fasta', 'w') as stream:
         combine(stream, combined['h_ctg'])
-    with open('all_p_ctg.fa', 'w') as stream:
+    with open('all_p_ctg.fasta', 'w') as stream:
         combine(stream, combined['p_ctg'])
     with open('all_h_ctg_ids', 'w') as stream:
         combine(stream, combined['h_ctg_ids'])
@@ -1588,8 +1588,8 @@ find ./0-phasing -name "phased_reads" | sort | xargs cat >| all_phased_reads
 find ./2-htigs -name "h_ctg_ids.*" | sort | xargs cat >| all_h_ctg_ids
 find ./2-htigs -name "p_ctg_edges.*" | sort | xargs cat >| all_p_ctg_edges
 find ./2-htigs -name "h_ctg_edges.*" | sort | xargs cat >| all_h_ctg_edges
-find ./2-htigs -name "p_ctg.*.fa" | sort | xargs cat >| all_p_ctg.fa
-find ./2-htigs -name "h_ctg.*.fa" | sort | xargs cat >| all_h_ctg.fa
+find ./2-htigs -name "p_ctg.*.fasta" | sort | xargs cat >| all_p_ctg.fasta
+find ./2-htigs -name "h_ctg.*.fasta" | sort | xargs cat >| all_h_ctg.fasta
 '''
 def parse_args(argv):
     parser = argparse.ArgumentParser(
@@ -1598,10 +1598,10 @@ def parse_args(argv):
     description_combine = """
     The run-dirs will have various files. Some of them will be named explicitly in results.json. Others are implicit outputs (to minimize explicits). E.g. p/h ctgs, ids, and edges. We will concatenate these files into single files, excluding any units of work which produced empty fasta. For now, we expect:
   all_h_ctg_edges
-  all_h_ctg.fa
+  all_h_ctg.fasta
   all_h_ctg_ids
   all_p_ctg_edges
-  all_p_ctg.fa
+  all_p_ctg.fasta
   all_phased_reads # ??? This would come from 0-phasing/
     """
     help_combine = 'Combine the results of each "graph_to_h_tigs" application into something useful to the next task.'
@@ -1654,10 +1654,10 @@ def parse_args(argv):
         help='Output. JSON list of results, one record per unit-of-work.')
     parser_apply.add_argument(
         '--min-query-span', type=int, default=100, required=False,
-        help='Minimum span of a haplotig fragment in query coordinates to retain it (the 3-unzip/1-hasm/p_ctg.fa after fragmentation.')
+        help='Minimum span of a haplotig fragment in query coordinates to retain it (the 3-unzip/1-hasm/p_ctg.fasta after fragmentation.')
     parser_apply.add_argument(
         '--min-target-span', type=int, default=100, required=False,
-        help='Minimum span of a haplotig fragment in target coordinates (2-asm-falcon/p_ctg.fa contig) to retain it.')
+        help='Minimum span of a haplotig fragment in target coordinates (2-asm-falcon/p_ctg.fasta contig) to retain it.')
     parser_apply.set_defaults(func=cmd_apply)
 
     parser_combine.add_argument(

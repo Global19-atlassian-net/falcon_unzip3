@@ -1371,9 +1371,9 @@ def test_write_unzipped_1(tmpdir):
 
         # Expected results.
         expected = {}
-        expected['p_ctg.000000F.fa'] = ''
+        expected['p_ctg.000000F.fasta'] = ''
         expected['p_ctg_edges.000000F'] = ''
-        expected['h_ctg.000000F.fa'] = ''
+        expected['h_ctg.000000F.fasta'] = ''
         expected['h_ctg_edges.000000F'] = ''
         expected['h_ctg.000000F.paf'] = ''
 
@@ -1409,14 +1409,14 @@ def test_write_unzipped_2(tmpdir):
 
         # Expected results.
         expected = {}
-        expected['p_ctg.000000F.fa'] = """\
+        expected['p_ctg.000000F.fasta'] = """\
 >000000F
 ACTG
 """
         expected['p_ctg_edges.000000F'] = """\
 000000F 000000001:E 000000002:E N H -1 0 -1 0
 """
-        expected['h_ctg.000000F.fa'] = """\
+        expected['h_ctg.000000F.fasta'] = """\
 """
         expected['h_ctg_edges.000000F'] = """\
 """
@@ -1470,14 +1470,14 @@ def test_write_unzipped_3(tmpdir):
 
         # Expected results.
         expected = {}
-        expected['p_ctg.000000F.fa'] = """\
+        expected['p_ctg.000000F.fasta'] = """\
 >000000F
 ACTG
 """
         expected['p_ctg_edges.000000F'] = """\
 000000F 000000001:E 000000002:E N H -1 0 -1 0
 """
-        expected['h_ctg.000000F.fa'] = """\
+        expected['h_ctg.000000F.fasta'] = """\
 >000000F_001
 A
 >000000F_002
@@ -1544,14 +1544,14 @@ def test_write_unzipped_4(tmpdir):
 
         # Expected results.
         expected = {}
-        expected['p_ctg.000000F.fa'] = """\
+        expected['p_ctg.000000F.fasta'] = """\
 >000000F
 ACTG
 """
         expected['p_ctg_edges.000000F'] = """\
 000000F 000000001:E 000000002:E N H -1 0 -1 0
 """
-        expected['h_ctg.000000F.fa'] = """\
+        expected['h_ctg.000000F.fasta'] = """\
 >000000F_002
 AG
 """
@@ -1613,11 +1613,11 @@ def test_write_unzipped_5(tmpdir):
 
         # Expected results.
         expected = {}
-        expected['p_ctg.000000F.fa'] = """\
+        expected['p_ctg.000000F.fasta'] = """\
 """
         expected['p_ctg_edges.000000F'] = """\
 """
-        expected['h_ctg.000000F.fa'] = """\
+        expected['h_ctg.000000F.fasta'] = """\
 """
         expected['h_ctg_edges.000000F'] = """\
 """
@@ -1674,11 +1674,11 @@ def test_write_unzipped_6(tmpdir):
 
         # Expected results.
         expected = {}
-        expected['p_ctg.000000F.fa'] = """\
+        expected['p_ctg.000000F.fasta'] = """\
 """
         expected['p_ctg_edges.000000F'] = """\
 """
-        expected['h_ctg.000000F.fa'] = """\
+        expected['h_ctg.000000F.fasta'] = """\
 """
         expected['h_ctg_edges.000000F'] = """\
 """
@@ -1732,14 +1732,14 @@ def test_write_unzipped_7(tmpdir):
 
         # Expected results.
         expected = {}
-        expected['p_ctg.000000F.fa'] = """\
+        expected['p_ctg.000000F.fasta'] = """\
 >000000F
 ACTG
 """
         expected['p_ctg_edges.000000F'] = """\
 000000F 000000001:E 000000002:E N H -1 0 -1 0
 """
-        expected['h_ctg.000000F.fa'] = """\
+        expected['h_ctg.000000F.fasta'] = """\
 >000000F_001
 A
 """
@@ -1800,14 +1800,14 @@ def test_write_unzipped_8(tmpdir):
 
         # Expected results.
         expected = {}
-        expected['p_ctg.000000F.fa'] = """\
+        expected['p_ctg.000000F.fasta'] = """\
 >000000F
 ACTG
 """
         expected['p_ctg_edges.000000F'] = """\
 000000F 000000001:E 000000002:E N H -1 0 -1 0
 """
-        expected['h_ctg.000000F.fa'] = """\
+        expected['h_ctg.000000F.fasta'] = """\
 >000000F_001
 A
 >000000F_002

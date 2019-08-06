@@ -475,7 +475,7 @@ def run(wd, ctg_id, extracted_ctg_fasta, p_ctg, p_ctg_tiling_path, a_ctg, a_ctg_
     ###################################################
     # Load tiling paths with coords, and filter the
     # deduplicated tiling paths (based on their presence
-    # in the a_ctg.fa file).
+    # in the a_ctg.fasta file).
     ###################################################
     p_paths = tiling_path.load_tiling_paths(p_ctg_tiling_path, whitelist_seqs=seqs_for_ctg, contig_lens=seq_lens)
     a_paths = tiling_path.load_tiling_paths(a_ctg_tiling_path, whitelist_seqs=seqs_for_ctg, contig_lens=None)

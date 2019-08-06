@@ -23,9 +23,9 @@ def run(all_ctgs_json,
         
 def is_haplotig(fn):
     """
-    >>> is_haplotig('/a/foo_bar.fa')
+    >>> is_haplotig('/a/foo_bar.fasta')
     True
-    >>> is_haplotig('/a/foo.fa')
+    >>> is_haplotig('/a/foo.fasta')
     False
     """
     return '_' in os.path.basename(fn)

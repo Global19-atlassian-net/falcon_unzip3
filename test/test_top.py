@@ -19,7 +19,7 @@ def datadir(request):
 
 
 def test_fai2ctgs(datadir, tmpdir):
-    p_ctg_fai_fn = str(datadir.join('greg200k-sv2-ccs/2-asm-falcon/p_ctg.fa.fai'))
+    p_ctg_fai_fn = str(datadir.join('greg200k-sv2-ccs/2-asm-falcon/p_ctg.fasta.fai'))
     o_fn = str(tmpdir.join('CTGS.json'))
 
     MOD.fai2ctgs(p_ctg_fai_fn, o_fn)

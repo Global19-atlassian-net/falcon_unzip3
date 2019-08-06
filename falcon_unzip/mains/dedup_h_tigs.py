@@ -8,13 +8,13 @@ LOG = logging.getLogger(__name__)
 
 
 def run(ctg_id):
-    fn = "h_ctg_all.{ctg_id}.fa".format(ctg_id=ctg_id)
+    fn = "h_ctg_all.{ctg_id}.fasta".format(ctg_id=ctg_id)
     if not io.exists_and_not_empty(fn):
-        LOG.info('No h_ctg_all.{ctg_id}.fa, but that is ok. Continue workflow.')
-        return 0  # it is ok if there is no h_ctg_all.{ctg_id}.fa, don't want to interupt the workflow
+        LOG.info('No h_ctg_all.{ctg_id}.fasta, but that is ok. Continue workflow.')
+        return 0  # it is ok if there is no h_ctg_all.{ctg_id}.fasta, don't want to interupt the workflow
     try:
         # Might still have a 0-length fasta line.
-        io.syscall("nucmer --mum p_ctg.{ctg_id}.fa h_ctg_all.{ctg_id}.fa -p hp_aln".format(ctg_id=ctg_id))
+        io.syscall("nucmer --mum p_ctg.{ctg_id}.fasta h_ctg_all.{ctg_id}.fasta -p hp_aln".format(ctg_id=ctg_id))
     except Exception:
         LOG.exception('nucmer failed, but we can probably proceed and simply skip this ctg. Check stderr to see what nucmer reported.')
         return 0
@@ -52,8 +52,8 @@ def run(ctg_id):
             h_ctg_to_phase[row[0]][(b_id, ph_id)] += 1
 
     with open("h_ctg_ids.%s" % ctg_id, "w") as h_ids:
-        with open("h_ctg.%s.fa" % ctg_id, "w") as f:
-            h_tig_all = FastaReader("h_ctg_all.%s.fa" % ctg_id)
+        with open("h_ctg.%s.fasta" % ctg_id, "w") as f:
+            h_tig_all = FastaReader("h_ctg_all.%s.fasta" % ctg_id)
             for r in h_tig_all:
                 p_ctg_phase = p_ctg_to_phase.get(r.name.split("_")[0], {})
 
