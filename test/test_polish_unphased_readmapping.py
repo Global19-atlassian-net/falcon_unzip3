@@ -20,7 +20,7 @@ def test_main_1(request, tmpdir):
         return os.path.join(request.fspath.dirname, '..', 'test_data', '4-polishing', fn)
     argv = ['prog',
             '--ctg'           , '000000F',
-            '--fai'           , td('combined_ph.fa.fai'),
+            '--fai'           , td('combined_ph.fasta.fai'),
             '--out-read-names', out_rn, 
             '--out-ref-names' , out_sn,
             '--read-to-ctg'   , td('read2ctg2.txt')

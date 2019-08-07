@@ -55,7 +55,7 @@ def run(p_ctg_fasta_fn, h_ctg_fasta_fn, ctg2bamfn_fn, split_fn, bash_template_fn
         # The segregated *.sam were created in task_segregate.
         # Network latency should not matter (much) because we have already waited for the 'done' file.
         #m_ctg_id = ctg_id.split('-')[0] # Why did we care about this? It used to be the workdir.
-        ref_fasta = os.path.join('./refs', ctg_id, 'ref.fa')
+        ref_fasta = os.path.join('./refs', ctg_id, 'ref.fasta')
         if not os.path.exists(ref_fasta):
             io.mkdirs(os.path.dirname(ref_fasta))
             # Note: Up to 50MB of seq data. Should do this on remote host.
@@ -119,11 +119,11 @@ def parse_args(argv):
     )
     parser.add_argument(
         '--p-ctg-fasta-fn',
-        help='Typically from 3-unzip/all_p_ctg.fa',
+        help='Typically from 3-unzip/all_p_ctg.fasta',
     )
     parser.add_argument(
         '--h-ctg-fasta-fn',
-        help='Typically from 3-unzip/all_h_ctg.fa',
+        help='Typically from 3-unzip/all_h_ctg.fasta',
     )
     parser.add_argument(
         '--ctg2bamfn-fn',

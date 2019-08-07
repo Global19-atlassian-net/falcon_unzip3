@@ -5,7 +5,7 @@ class Haplotig:
         self.seq = seq              # ''
         self.edges = edges          # list()
         self.path = path            # list()
-        # Position of the haplotig on the collapsed primary contig (2-asm-falcon/p_ctg.fa).
+        # Position of the haplotig on the collapsed primary contig (2-asm-falcon/p_ctg.fasta).
         self.cstart = cstart        # -1
         self.cend = cend            # -1
         # Additional user info, such as coordinates, annotations, and various attributes.

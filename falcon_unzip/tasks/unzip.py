@@ -84,19 +84,19 @@ python3 -m falcon_unzip.proto.extract_phased_preads \
     --rid-phase-map {output.rid_to_phase_out}.true \
     --out proto/preads.fasta
 
-ln -sf {input.ref_fasta} proto/ref.fa
-time minimap2 -a -x map-pb -t ${{threads_aln}} proto/ref.fa proto/preads.fasta > proto/preads.sam
+ln -sf {input.ref_fasta} proto/ref.fasta
+time minimap2 -a -x map-pb -t ${{threads_aln}} proto/ref.fasta proto/preads.fasta > proto/preads.sam
 
 python3 -m falcon_unzip.proto.main_augment_pb \
     --wd ./proto/ \
     --ctg-id {params.ctg_id} \
-    --p-ctg ${{falcon_asm_dir}}/p_ctg.fa \
+    --p-ctg ${{falcon_asm_dir}}/p_ctg.fasta \
     --p-ctg-tiling-path ${{falcon_asm_dir}}/p_ctg_tiling_path \
-    --a-ctg ${{falcon_asm_dir}}/a_ctg.fa \
+    --a-ctg ${{falcon_asm_dir}}/a_ctg.fasta \
     --a-ctg-tiling-path ${{falcon_asm_dir}}/a_ctg_tiling_path \
     --p-variant-fn get_phased_blocks/phased_variants \
     --preads-sam proto/preads.sam \
-    --extracted-ctg-fasta ${{unzip_dir}}/reads/{params.ctg_id}/ref.fa \
+    --extracted-ctg-fasta ${{unzip_dir}}/reads/{params.ctg_id}/ref.fasta \
     --rawread-bam ${{ctg_aln_out}} \
     --rid-phase-map {output.rid_to_phase_out}.true \
     --out-updated-rid-phase_map {output.rid_to_phase_out}.tmp
@@ -131,7 +131,7 @@ ln -sf {input.preads4falcon} .
 rm -f {output.p_ctg}
 
 # Given sg_edges_list, utg_data, ctg_paths, preads4falcon.fasta,
-# write p_ctg.fa and a_ctg_all.fa,
+# write p_ctg.fasta and a_ctg_all.fasta,
 # plus p_ctg_tiling_path, a_ctg_tiling_path:
 time python3 -m falcon_kit.mains.graph_to_contig
 
@@ -165,9 +165,9 @@ python3 -m falcon_unzip.mains.graphs_to_h_tigs_2 --gathered-rid-to-phase={input.
 for f in `cat ../reads/ctg_list `
 do
     mkdir -p ./$f;
-    if [ -s ./$f/h_ctg.$f.fa ]
+    if [ -s ./$f/h_ctg.$f.fasta ]
     then
-        grep ">" ./$f/h_ctg.$f.fa | sed "s/^>//" >| ./$f/h_ctg_ids.$f
+        grep ">" ./$f/h_ctg.$f.fasta | sed "s/^>//" >| ./$f/h_ctg_ids.$f
     else
         rm -rf ./$f/h_ctg_ids.$f
         touch ./$f/h_ctg_ids.$f
@@ -188,20 +188,20 @@ find ./0-phasing -name "phased_reads" | sort | xargs cat >| all_phased_reads
 #find ./2-htigs -name "h_ctg_ids.*" | sort | xargs cat >| all_h_ctg_ids
 #find ./2-htigs -name "p_ctg_edges.*" | sort | xargs cat >| all_p_ctg_edges
 #find ./2-htigs -name "h_ctg_edges.*" | sort | xargs cat >| all_h_ctg_edges
-#find ./2-htigs -name "p_ctg.*.fa" | sort | xargs cat >| all_p_ctg.fa
-#find ./2-htigs -name "h_ctg.*.fa" | sort | xargs cat >| all_h_ctg.fa
+#find ./2-htigs -name "p_ctg.*.fasta" | sort | xargs cat >| all_p_ctg.fasta
+#find ./2-htigs -name "h_ctg.*.fasta" | sort | xargs cat >| all_h_ctg.fasta
 
-if [[ ! -s all_p_ctg.fa ]]; then
-    echo "Empty all_p_ctg.fa -- No point in continuing!"
+if [[ ! -s all_p_ctg.fasta ]]; then
+    echo "Empty all_p_ctg.fasta -- No point in continuing!"
     exit 1
 fi
 
 # # Generate a GFA for only primary contigs and haplotigs.
-# time python3 -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} >| ./asm.gfa
+# time python3 -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fasta --h-ctg-fasta ./all_h_ctg.fasta --preads-fasta {input.preads4falcon} >| ./asm.gfa
 
 # # Generate a GFA of all assembly graph edges. This GFA can contain
 # # edges and nodes which are not part of primary contigs and haplotigs
-# time python3 -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fa --h-ctg-fasta ./all_h_ctg.fa --preads-fasta {input.preads4falcon} --add-string-graph >| ./sg.gfa
+# time python3 -m falcon_unzip.mains.unzip_gen_gfa_v1 --unzip-root . --p-ctg-fasta ./all_p_ctg.fasta --h-ctg-fasta ./all_h_ctg.fasta --preads-fasta {input.preads4falcon} --add-string-graph >| ./sg.gfa
 """
 
 TASK_TRACK_READS_H_SCRIPT = """\
@@ -381,7 +381,7 @@ def run_workflow(wf, config, unzip_config_fn):
     wf.max_jobs = default_njobs
 
     falcon_asm_done_fn = './2-asm-falcon/falcon_asm_done'
-    p_ctg_fn = './2-asm-falcon/p_ctg.fa'
+    p_ctg_fn = './2-asm-falcon/p_ctg.fasta'
     raw_reads_db_fn = './0-rawreads/build/raw_reads.db'
     preads_db_fn = './1-preads_ovl/build/preads.db'
     r_las_fofn_fn = './0-rawreads/las-merge-combine/las_fofn.json'
@@ -479,7 +479,7 @@ def run_workflow(wf, config, unzip_config_fn):
 
     preads4falcon_fn = './1-preads_ovl/db2falcon/preads4falcon.fasta'
 
-    hasm_p_ctg_fn = './3-unzip/1-hasm/p_ctg.fa'
+    hasm_p_ctg_fn = './3-unzip/1-hasm/p_ctg.fasta'
     wf.addTask(gen_task(
             script=TASK_HASM_SCRIPT,
             inputs={
@@ -552,8 +552,8 @@ def run_workflow(wf, config, unzip_config_fn):
             outputs={
                 'job_done': job_done,
                 'all_phased_reads': './3-unzip/all_phased_reads',
-                'p_ctg_fa': './3-unzip/all_p_ctg.fa',
-                'h_ctg_fa': './3-unzip/all_h_ctg.fa',
+                'p_ctg_fa': './3-unzip/all_p_ctg.fasta',
+                'h_ctg_fa': './3-unzip/all_h_ctg.fasta',
             },
             parameters={},
             dist=Dist(
@@ -696,8 +696,8 @@ def run_workflow(wf, config, unzip_config_fn):
     wf.addTask(gen_task(
         script=TASK_QUIVER_SPLIT_SCRIPT,
         inputs={
-                'p_ctg_fa': './3-unzip/all_p_ctg.fa',
-                'h_ctg_fa': './3-unzip/all_h_ctg.fa',
+                'p_ctg_fa': './3-unzip/all_p_ctg.fasta',
+                'h_ctg_fa': './3-unzip/all_h_ctg.fasta',
                 'ctg2bamfn': ctg2segregated_bamfn,
                 'unzip_config_fn': unzip_config_fn,
         },
