@@ -402,6 +402,8 @@ def run_workflow(wf, config, unzip_config_fn):
     fasta_fofn_fn = Unzip_config.get('input_fofn') #, './input.fofn') # from user config, usually
     extra = str(int(Unzip_config['polish_include_zmw_all_subreads']))
 
+    symlink_fasta(p_ctg_fn)
+
     wf.addTask(gen_task(
             script=TASK_TRACK_READS_SCRIPT,
             inputs={
@@ -494,6 +496,8 @@ def run_workflow(wf, config, unzip_config_fn):
             parameters={},
             dist=Dist(NPROC=1, job_dict=config['job.step.unzip.hasm']),
     ))
+
+    # Note: "graphs_to_h_tigs_2.py split" implicitly requires 2-asm-falcon/p_ctg.fasta.fai
 
     #htigs_done_fn = './3-unzip/2-htigs/htigs.done'
     g2h_all_units_fn = './3-unzip/2-htigs/split/all-units-of-work.json'
@@ -691,6 +695,10 @@ def run_workflow(wf, config, unzip_config_fn):
         dist=Dist(local=True),
     ))
 
+    # wf.refresh() # already done by gen_parallel
+    symlink_fasta('./3-unzip/all_p_ctg.fasta')
+    symlink_fasta('./3-unzip/all_h_ctg.fasta')
+
     quiver_all_units_fn ='./4-polish/quiver-split/all-units-of-work.json'
     quiver_run_bash_template_fn ='./4-polish/quiver-split/bash-template.sh'
     wf.addTask(gen_task(
@@ -760,3 +768,23 @@ def run_workflow(wf, config, unzip_config_fn):
     ))
 
     wf.refreshTargets()
+
+
+def symlink_fasta(fn):
+    """If we cannot find fn, look for fn:s/.fasta/.fa/
+    If found, symlink fn to that.
+    Strictly for compatibility with old Falcon runs, before the
+    switch from .fa to .fasta everywhere.
+    Since we write into the old output directory, this can cause lots of problems
+    for various workflows, but it is only temporary.
+    """
+    if os.path.exists(fn):
+        return
+    assert fn.endswith('.fasta')
+    fn_fa = fn[:-6] + '.fa'
+    if not os.path.exists(fn_fa):
+        msg = "Found neither '{}' nor '{}'.".format(fn, fn_fa)
+        raise Exception(msg)
+    io.symlink(os.path.basename(fn_fa), fn)
+    if not os.path.exists(fn + '.fai'):
+        io.syscall('samtools faidx ' + fn)
