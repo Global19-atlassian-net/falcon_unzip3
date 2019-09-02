@@ -34,7 +34,7 @@ def test_validate_config(tmpdir, monkeypatch):
         'blasr', 'samtools', 'pbalign', 'gcpp',
         'minimap2',
         'nucmer', 'show-coords',
-        'fc_rr_hctg_track2.exe',
+        'falconc',
     ]
     for cmd in cmds:
         p = tmpdir.join(cmd)

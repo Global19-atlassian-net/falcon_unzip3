@@ -216,7 +216,7 @@ fc_rr_hctg_track.py --stream  --db={input.r_db} --las-fofn={input.r_las_fofn} --
 abs_rawread_to_contigs=$(readlink -f {output.rawread_to_contigs}) #TODO: No readlink
 cwd=$(pwd)
 cd {params.topdir}
-fc_rr_hctg_track2.exe --read-to-contig-map=${{cwd}}/read_to_contig_map --output=${{abs_rawread_to_contigs}} --partials-fn=${{cwd}}/partials.json
+falconc rr-hctg-track2 --read-to-contig-map=${{cwd}}/read_to_contig_map --output=${{abs_rawread_to_contigs}} --partials-fn=${{cwd}}/partials.json
 cd -
 
 # Clean up.

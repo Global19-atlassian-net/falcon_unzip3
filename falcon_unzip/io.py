@@ -64,7 +64,7 @@ def validate_config(config):
         'minimap2',
         'nucmer',
         'show-coords',
-        'fc_rr_hctg_track2.exe',
+        'falconc',
     ]
     LOG.info('PATH={}'.format(os.environ['PATH']))
     try:
