@@ -3,6 +3,7 @@ from falcon_kit.io import (
         serialize, deserialize, log, mkdirs, syscall, capture, eng,
         rm, touch, filesize, exists_and_not_empty,
         yield_abspath_from_fofn, cd,
+        symlink,
 )
 import json
 import logging
@@ -63,7 +64,7 @@ def validate_config(config):
         'minimap2',
         'nucmer',
         'show-coords',
-        'fc_rr_hctg_track2.exe',
+        'falconc',
     ]
     LOG.info('PATH={}'.format(os.environ['PATH']))
     try:

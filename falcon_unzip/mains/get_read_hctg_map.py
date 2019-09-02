@@ -55,7 +55,7 @@ def run(
     assert pread_to_contigs, 'Empty p/h_ctg_edges: {!r} {!r}'.format(
         p_ctg_edges_fn, h_ctg_edges_fn)
     with open(output_fn, 'w') as f:
-        for k in pread_to_contigs:
+        for k in sorted(pread_to_contigs):
             pid, rid, oid = k
             for ctg in list(pread_to_contigs[k]):
                 print('%09d %09d %s %s' % (pid, rid, oid, ctg), file=f)
