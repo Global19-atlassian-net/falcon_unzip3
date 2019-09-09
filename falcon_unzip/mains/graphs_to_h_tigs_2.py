@@ -229,25 +229,26 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
     #########################################################
     num_threads = 16
     mapping_out_prefix = os.path.join(out_dir, 'aln_snp_hasm_ctg')
-    sam_path = mapping_out_prefix + '.sam'
+    mapping_out_path = mapping_out_prefix + '.sam'
 
     def excomm(cmd):
         execute.execute_command(cmd, logger)
 
     if snp_haplotigs:
-        # BLASR crashes on empty files, so address that.
         p_ctg_fn = os.path.join(proto_dir, 'ref.fasta')
-        blasr_params = '--minMatch 15 --maxMatch 25 --advanceHalf --advanceExactMatches 10 --bestn 1 --nproc {} --noSplitSubreads'.format(num_threads)
-        excomm('blasr {} {} {} --sam --out {}.tmp.sam'.format(
-                blasr_params, aln_snp_hasm_ctg_path, p_ctg_fn, mapping_out_prefix))
-        excomm('samtools sort {pre}.tmp.sam -o {pre}.sam'.format(
-                pre=mapping_out_prefix))
-        excomm('rm -f {pre}.tmp.sam'.format(
-                pre=mapping_out_prefix))
+        # The "-g" parameter allows a larger gap for chain elongation, and "-r" is the bandwidth.
+        aln_params = '--eqx -x map-pb -t {threads} -g 10000 -r 10000'.format(threads=num_threads)
+        # Align and filter secondary alignments.
+        excomm('minimap2 -a {params} {ref} {queries} | samtools view -h -F 0x100 > {out_prefix}.tmp.sam'.format(
+                params=aln_params, ref=p_ctg_fn, queries=aln_snp_hasm_ctg_path, out_prefix=mapping_out_prefix))
+        excomm('samtools sort {out_prefix}.tmp.sam -o {out}'.format(
+                out_prefix=mapping_out_prefix, out=mapping_out_path))
+        excomm('rm -f {out_prefix}.tmp.sam'.format(
+                out_prefix=mapping_out_prefix))
 
     fp_proto_log('Loading the alignments.')
 
-    aln_dict = load_and_hash_sam(sam_path)
+    aln_dict = load_and_hash_sam(mapping_out_path)
 
     # Debug verbose.
     fp_proto_log('Loaded alignments:')
