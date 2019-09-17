@@ -40,7 +40,7 @@ global all_rid_to_phase
 global all_flat_rid_to_phase
 global all_haplotigs_for_ctg
 global sg_edges
-global p_ctg_seqs
+#global p_ctg_seqs
 global p_ctg_tiling_paths
 global LOG
 global falcon_p_ctg_fa_obj
@@ -74,7 +74,6 @@ def run_generate_haplotigs_for_ctg(input_):
 
     try:
         global all_haplotigs_for_ctg
-        global p_ctg_seqs
         global sg_edges
         global p_ctg_tiling_paths
 
@@ -1387,7 +1386,7 @@ def define_globals(args):
     global all_rid_to_phase
     global all_flat_rid_to_phase
     global all_haplotigs_for_ctg
-    global p_ctg_seqs
+    #global p_ctg_seqs
     global sg_edges
     global p_ctg_tiling_paths
     global falcon_p_ctg_fa_obj
@@ -1420,7 +1419,7 @@ def define_globals(args):
     falcon_p_ctg_fa = os.path.join(fc_asm_path, "p_ctg.fasta")
     falcon_p_ctg_fa_obj = pysam.FastaFile(falcon_p_ctg_fa)
 
-    p_ctg_seqs = falcon_p_ctg_fa_obj.references
+    #p_ctg_seqs = falcon_p_ctg_fa_obj.references
 
     LOG.info('Loading tiling paths.')
     # Hash the lengths of the primary contig sequences.
