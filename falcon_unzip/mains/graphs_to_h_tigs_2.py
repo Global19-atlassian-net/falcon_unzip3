@@ -1417,7 +1417,7 @@ def define_globals(args):
 
     #TODO remove hard coded path
     falcon_p_ctg_fa = os.path.join(fc_asm_path, "p_ctg.fasta")
-    falcon_p_ctg_fa_obj = pysam.FastaFile(falcon_p_ctg_fa)
+    falcon_p_ctg_fa_obj = pysam.FastaFile(falcon_p_ctg_fa)  # pylint: disable=no-member
 
     #p_ctg_seqs = falcon_p_ctg_fa_obj.references
 
@@ -1425,7 +1425,7 @@ def define_globals(args):
     # Hash the lengths of the primary contig sequences.
     # Needed to correctly assign node coords when loading tiling paths
     p_ctg_seq_lens = collections.OrderedDict()
-    with pysam.FastxFile(falcon_p_ctg_fa) as fh:
+    with pysam.FastxFile(falcon_p_ctg_fa) as fh:  # pylint: disable=no-member
         for entry in fh:
             p_ctg_seq_lens[entry.name] = falcon_p_ctg_fa_obj.get_reference_length(entry.name)
     # Load the tiling path of the primary contig, and assign coordinants to nodes.
