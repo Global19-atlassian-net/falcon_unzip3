@@ -1412,7 +1412,7 @@ def define_globals(args):
     LOG.info('Loading tiling paths.')
     # Hash the lengths of the primary contig sequences.
     # Needed to correctly assign node coords when loading tiling paths
-    p_ctg_seq_lens = {}
+    p_ctg_seq_lens = collections.OrderedDict()
     for p_ctg_id, ctg_seq in p_ctg_seqs.items():
         p_ctg_seq_lens[p_ctg_id] = len(ctg_seq)
     # Load the tiling path of the primary contig, and assign coordinants to nodes.
