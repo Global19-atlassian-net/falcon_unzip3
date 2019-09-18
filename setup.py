@@ -9,7 +9,7 @@ install_requires = [
         "falcon-kit>=1.4.1",
         "pypeflow>=2.3.0",
         "networkx>=1.9.1",
-        "pysam>=0.15.3",
+        "pysam>=0.8.4",
         "msgpack",
         "intervaltree",
 ]
