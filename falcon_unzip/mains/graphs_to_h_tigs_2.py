@@ -40,9 +40,10 @@ global all_rid_to_phase
 global all_flat_rid_to_phase
 global all_haplotigs_for_ctg
 global sg_edges
-global p_ctg_seqs
+#global p_ctg_seqs
 global p_ctg_tiling_paths
 global LOG
+global falcon_p_ctg_fa_obj
 LOG = logging.getLogger() # root, to inherit from sub-loggers
 
 """
@@ -73,11 +74,10 @@ def run_generate_haplotigs_for_ctg(input_):
 
     try:
         global all_haplotigs_for_ctg
-        global p_ctg_seqs
         global sg_edges
         global p_ctg_tiling_paths
 
-        p_ctg_seq = p_ctg_seqs[ctg_id]
+        p_ctg_seq = falcon_p_ctg_fa_obj.fetch(ctg_id)
         p_ctg_tiling_path = p_ctg_tiling_paths[ctg_id]
         snp_haplotigs = all_haplotigs_for_ctg.get(ctg_id, {})
         return generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
@@ -1386,9 +1386,10 @@ def define_globals(args):
     global all_rid_to_phase
     global all_flat_rid_to_phase
     global all_haplotigs_for_ctg
-    global p_ctg_seqs
+    #global p_ctg_seqs
     global sg_edges
     global p_ctg_tiling_paths
+    global falcon_p_ctg_fa_obj
 
     fc_asm_path = args.fc_asm_path
     fc_hasm_path = args.fc_hasm_path
@@ -1404,21 +1405,29 @@ def define_globals(args):
     with io.open_progress(args.rid_phase_map) as f:
         for row in f:
             row = row.strip().split()
+            # TODO - it is not clear if this is safe, but if it is we should do it
+            #if int(row[2]) == -1:
+            #    continue
             all_rid_to_phase.setdefault(row[1], {})
             all_rid_to_phase[row[1]][row[0]] = (int(row[2]), int(row[3]))
             all_flat_rid_to_phase[row[0]] = (row[1], int(row[2]), int(row[3]))
 
     # Load the primary contig sequences.
     LOG.info('Loading the 2-asm-falcon primary contigs.')
-    p_ctg_seqs = load_all_seq(os.path.join(fc_asm_path, "p_ctg.fasta"))
-    LOG.info('Done loading 2-asm-falcon primary contigs.')
+
+    #TODO remove hard coded path
+    falcon_p_ctg_fa = os.path.join(fc_asm_path, "p_ctg.fasta")
+    falcon_p_ctg_fa_obj = pysam.FastaFile(falcon_p_ctg_fa)  # pylint: disable=no-member
+
+    #p_ctg_seqs = falcon_p_ctg_fa_obj.references
 
     LOG.info('Loading tiling paths.')
     # Hash the lengths of the primary contig sequences.
     # Needed to correctly assign node coords when loading tiling paths
     p_ctg_seq_lens = collections.OrderedDict()
-    for p_ctg_id, ctg_seq in p_ctg_seqs.items():
-        p_ctg_seq_lens[p_ctg_id] = len(ctg_seq)
+    with pysam.FastxFile(falcon_p_ctg_fa) as fh:  # pylint: disable=no-member
+        for entry in fh:
+            p_ctg_seq_lens[entry.name] = falcon_p_ctg_fa_obj.get_reference_length(entry.name)
     # Load the tiling path of the primary contig, and assign coordinants to nodes.
     p_ctg_tiling_paths = tiling_path.load_tiling_paths(os.path.join(fc_asm_path, "p_ctg_tiling_path"), contig_lens=p_ctg_seq_lens, whitelist_seqs=None)
     LOG.info('Done loading tiling paths.')
@@ -1512,8 +1521,8 @@ def cmd_split(args):
 
     #TODO remove hard coded path to FAI
     falcon_p_ctg_fai_fn = "../../../2-asm-falcon/p_ctg.fasta.fai"
-    top.fai2ctgs(falcon_p_ctg_fai_fn, '3-unzip/2-htigs/split/p_ctg_names.json')
-    pnames = io.deserialize('3-unzip/2-htigs/split/p_ctg_names.json') 
+    top.fai2ctgs(falcon_p_ctg_fai_fn, 'p_ctg_names.json')
+    pnames = io.deserialize('p_ctg_names.json')  # currently in top-dir
     ctg_id_list = list(pnames)
 
     LOG.info('Creating units-of-work for ctg_id_list (though many will be skipped): {}'.format(ctg_id_list))
