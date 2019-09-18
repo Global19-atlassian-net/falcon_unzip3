@@ -7,8 +7,9 @@ from time import gmtime, strftime
 def log(message, logger):
   """Return the current date and time.
   """
-  timestamp = strftime("%Y/%m/%d %H:%M:%S", gmtime());
-  msg = '[{}] {}'.format(timestamp, message)
+  #timestamp = strftime("%Y/%m/%d %H:%M:%S", gmtime());
+  #msg = '[{}] {}'.format(timestamp, message)
+  msg = '{}'.format(message)
   logger.log(logging.WARNING-1, msg)
 
 
