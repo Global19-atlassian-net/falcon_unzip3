@@ -253,7 +253,11 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
     # Debug verbose.
     fp_proto_log('Loaded alignments:')
     for qname, aln in aln_dict.items():
-        fp_proto_log(str(aln))
+        # [aln.qname, aln.reference_name, score, identity,
+        #  0, aln.query_alignment_start, aln.query_alignment_end, aln.query_length,
+        #  (1 if aln.is_reverse == True else 0), aln.reference_start, aln.reference_end, ref_len, 254, aln]
+        msg = str(aln[:-1]) # no str() for pysam.libcalignedsegment.AlignedSegment object
+        fp_proto_log(msg)
 
     #########################################################
     # Filter out overlapping haplotigs for each phasing block.
