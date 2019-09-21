@@ -21,7 +21,7 @@ samtools faidx {input.FA} {params.ctg} > ref.fasta
 perl -lane 'print $F[0] if $F[1] eq "{params.ctg}" && $F[2] != -1' {input.READTOCTG} | sort | uniq > readnames.txt
 samtools view -F 1796 {input.UBAM} {params.ctg} | cut -f 1 | sort | uniq >> readnames.txt
 samtools fqidx -r readnames.txt {input.FQ} > reads.fastq
-time pbmm2 align --sort -j {params.pypeflow_nproc} --preset CCS ref.fasta reads.fastq | samtools view -F 1796  > aln.sam
+time pbmm2 align --sort -j {params.pypeflow_nproc} --preset CCS ref.fasta reads.fastq | samtools view -F 0x704 | falconc bam-filter-clipped -t -i:- -o aln.sam
 time racon -t {params.pypeflow_nproc} reads.fastq aln.sam ref.fasta > {output.POL}
 # Cleanup 
 rm *.sam *.fastq
