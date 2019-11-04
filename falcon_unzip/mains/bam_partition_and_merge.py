@@ -263,7 +263,7 @@ def get_zmw2ctg(read2ctg):
         if zmw in result and result[zmw] != ctg:
             msg = 'Found dup ctg in read2ctg for zmw "{}" (subread {}); maps to "{}" and "{}"; keeping the latter.'.format(
                 zmw, subread_name, ctg, result[zmw])
-            LOG.warn(msg)
+            LOG.warning(msg)
             del result[zmw]
             skipped.add(zmw)
         if zmw not in skipped:
