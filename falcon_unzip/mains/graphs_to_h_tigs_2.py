@@ -960,7 +960,7 @@ def update_haplotig_graph(haplotig_graph, phase_alias_map):
     # Update the aliases.
     for v in haplotig_graph2.nodes():
         # v = htig['name']
-        vdata = haplotig_graph2.node[v]
+        vdata = haplotig_graph2.nodes[v]
         vphase = vdata['phase']
         vphase_alias = phase_alias_map.get(vphase, -1)
         vdata['phase_alias'] = vphase_alias
@@ -970,10 +970,10 @@ def update_haplotig_graph(haplotig_graph, phase_alias_map):
         # Check if there are any edges which resolve
         # to the same alias in the graph.
         matching_alias = False
-        v_alias = haplotig_graph2.node[v]['phase_alias']
+        v_alias = haplotig_graph2.nodes[v]['phase_alias']
         nonmatching_edges = set()
         for vv, ww in haplotig_graph2.out_edges(v):
-            ww_alias = haplotig_graph2.node[ww]['phase_alias']
+            ww_alias = haplotig_graph2.nodes[ww]['phase_alias']
             if ww_alias == v_alias:
                 matching_alias = True
             else:
@@ -991,8 +991,8 @@ def update_haplotig_graph(haplotig_graph, phase_alias_map):
 
     # Update the weights of any remaining edges.
     for v, w in haplotig_graph2.edges():
-        v_alias = haplotig_graph2.node[v]['phase_alias']
-        w_alias = haplotig_graph2.node[w]['phase_alias']
+        v_alias = haplotig_graph2.nodes[v]['phase_alias']
+        w_alias = haplotig_graph2.nodes[w]['phase_alias']
         if v_alias == -1 and w_alias == -1:
             weight = 50
         elif v_alias == -1 or w_alias == -1:
@@ -1039,7 +1039,7 @@ def construct_ctg_seq(haplotig_graph, new_ctg_id, node_path):
     # The sequence is composed of clipped haplotigs, so plain concatenation is valid.
     new_ctg_seq = ''
     for v in node_path:
-        node = haplotig_graph.node[v]
+        node = haplotig_graph.nodes[v]
         if node['label'] == 'source' or node['label'] == 'sink':
             continue
         new_ctg_seq += node['htig']['seq']
@@ -1052,7 +1052,7 @@ def construct_ctg_seq(haplotig_graph, new_ctg_id, node_path):
     path_seq_len = 0
 
     for v in node_path:
-        node = haplotig_graph.node[v]
+        node = haplotig_graph.nodes[v]
 
         if node['label'] == 'source':
             node_start_coords[v] = 0
