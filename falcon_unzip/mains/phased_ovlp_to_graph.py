@@ -1061,7 +1061,7 @@ def run(args):
 
     sg2 = nx.DiGraph()
 
-    for v, w in edge_data:
+    for v, w in edge_data.keys():
 
         assert (reverse_end(w), reverse_end(v)) in edge_data
 
