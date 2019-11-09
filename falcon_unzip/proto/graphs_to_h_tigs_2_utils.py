@@ -182,7 +182,7 @@ def nx_to_gfa(ctg_id, haplotig_graph, fp_out):
 
     # Source and sink nodes are now part of the haplotig_graph.
     for v in haplotig_graph.nodes():
-        node = haplotig_graph.node[v]
+        node = haplotig_graph.nodes[v]
         if node['label'] == 'source' or node['label'] == 'sink':
             line = 'S\t%s\t%s\tLN:i:%d' % (v, '*', 0)
         else:
