@@ -5,6 +5,7 @@ import os
 import re
 from .. import io
 
+STRICTNESS = 0
 arid2phase = {}
 
 # TODO: Kill all threads gracefully if one encounters an error.
@@ -139,7 +140,7 @@ def filter_stage1(input_):
 
 
 def filter_stage2(input_):
-    db_fn, fn, max_diff, max_ovlp, min_ovlp, min_len, ignore_set = input_
+    db_fn, fn, max_diff, max_ovlp, min_ovlp, min_len, ignore_set, strictness = input_
     try:
         contained_id = set()
         for l in subprocess.check_output(shlex.split("LA4Falcon -mo %s %s" % (db_fn, fn)), encoding='ascii').splitlines():
@@ -155,6 +156,18 @@ def filter_stage2(input_):
                 continue
             if arid2phase[t_id][1] == arid2phase[q_id][1] and arid2phase[t_id][2] != arid2phase[q_id][2]:
                 continue
+
+            if strictness > 0:
+                ###############################################
+                # Added a couple more of strict filters:
+                # The phase needs to match exactly to add a read to contained list:
+                ###############################################
+                if arid2phase[t_id][1] != arid2phase[q_id][1] or arid2phase[t_id][2] != arid2phase[q_id][2]:
+                    continue
+                # If one of the reads is unphased, do not consider this "containment" call:
+                if arid2phase[t_id][1] == "-1" or arid2phase[q_id][1] == "-1":
+                    continue
+                ###############################################
 
             q_s, q_e, q_l = int(l[5]), int(l[6]), int(l[7])
             t_s, t_e, t_l = int(l[9]), int(l[10]), int(l[11])
@@ -182,7 +195,7 @@ def filter_stage2(input_):
 
 def filter_stage3(input_):
 
-    db_fn, fn, max_diff, max_ovlp, min_ovlp, min_len, ignore_set, contained_set, bestn = input_
+    db_fn, fn, max_diff, max_ovlp, min_ovlp, min_len, ignore_set, contained_set, bestn, strictness = input_
 
     overlap_data = {"5p": [], "3p": []}
     try:
@@ -201,6 +214,20 @@ def filter_stage3(input_):
                 continue
             if arid2phase[t_id][1] == arid2phase[q_id][1] and arid2phase[t_id][2] != arid2phase[q_id][2]:
                 continue
+
+            if strictness > 0:
+                # if arid2phase[t_id][1] == "-1" or arid2phase[q_id][1] == "-1":
+                #     continue
+                ###############################################
+                # Added a couple more of strict filters:
+                # The phase needs to match exactly, skip this overlap.
+                ###############################################
+                if arid2phase[t_id][1] != arid2phase[q_id][1] or arid2phase[t_id][2] != arid2phase[q_id][2]:
+                    continue
+                # If one of the reads is unphased, do not consider this overlap.
+                if arid2phase[t_id][1] == "-1" or arid2phase[q_id][1] == "-1":
+                    continue
+                ###############################################
 
             if current_q_id == None:
                 current_q_id = q_id
@@ -295,6 +322,7 @@ def run(args):
     min_len = args.min_len
     bestn = args.bestn
     db_fn = args.db
+    strictness = args.strictness
 
     assert_exists(db_fn)
 
@@ -319,7 +347,7 @@ def run(args):
     ignore_all = set(ignore_all)
     for fn in file_list:
         if len(fn) != 0:
-            inputs.append((db_fn, fn, max_diff, max_cov, min_cov, min_len, ignore_all))
+            inputs.append((db_fn, fn, max_diff, max_cov, min_cov, min_len, ignore_all, strictness))
     contained = set()
     for res in exe_pool.imap(filter_stage2, inputs):
         contained.update(res[1])
@@ -330,7 +358,7 @@ def run(args):
     ignore_all = set(ignore_all)
     for fn in file_list:
         if len(fn) != 0:
-            inputs.append((db_fn, fn, max_diff, max_cov, min_cov, min_len, ignore_all, contained, bestn))
+            inputs.append((db_fn, fn, max_diff, max_cov, min_cov, min_len, ignore_all, contained, bestn, strictness))
     for res in exe_pool.imap(filter_stage3, inputs):
         for l in res[1]:
             print(" ".join(l))
@@ -366,6 +394,9 @@ def parse_args(argv):
     parser.add_argument(
         '--rid-phase-map', type=str,
         help="the file that encode the relationship of the read id to phase blocks", required=True)
+    parser.add_argument(
+        '--strictness', type=int, default=STRICTNESS,
+        help='If >0, keep *only* the edges which have both nodes of the same phase. Unphased edges are considered dangereous here and removed.')
     args = parser.parse_args(argv[1:])
     return args
 
