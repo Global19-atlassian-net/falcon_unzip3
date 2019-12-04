@@ -44,7 +44,7 @@ def getPH(combined_ph_fai_fn, readtoctg_fn):
             LOG.warning("ctg {} is being skipped because it did not unzip".format(ctg))
             SKIP.add(ctg)
             continue
-        if count < 10:
+        if count < 5:
             LOG.warning("ctg {} is being skipped due to depth of coverage {} < 10 reads total".format(ctg, count))
             SKIP.add(ctg)
         if int(SIZES[ctg]) < 10000:
