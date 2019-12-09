@@ -55,7 +55,7 @@ python3 -m falcon_unzip.mains.polish_unphased_readmapping --ctg {params.ctg} --f
 samtools fqidx -r read_names.txt {input.fq} > reads.fastq
 samtools faidx -r ref_names.txt {input.fa}  > ref.fasta
 pbmm2 align -j 1 --preset CCS --sort ref.fasta reads.fastq > tmp.bam
-falconc bam-filter-clipped -t -F 0x704 -i:- -o:- < tmp.bam | samtools view -q 5 -bh > aln.bam
+falconc bam-filter-clipped -t -F 0x704 --output-count-fn filtered_aln_count.txt --input-fn:- --output-fn:- < tmp.bam | samtools view -q 5 -bh > aln.bam
 """
 
 TASK_POLISH_PREAMBLE="""
