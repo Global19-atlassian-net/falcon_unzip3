@@ -1245,8 +1245,8 @@ def test_extract_unzipped_ctgs_4():
         exp_all_p_seqs = {  '{}p01'.format(ctg_id): region_2_seq,
                             '{}p02'.format(ctg_id): region_1_seq
                          }
-        exp_all_p_edges = { '{}p01'.format(ctg_id): ['{ctg_id}p01 '.format(ctg_id=ctg_id) + ' '.join(edge[1:3]) + ' N H -1 0 -1 0' for edge in haplotig_graph.node[region_2_name]['htig']['path']],
-                            '{}p02'.format(ctg_id): ['{ctg_id}p02 '.format(ctg_id=ctg_id) + ' '.join(edge[1:3]) + ' N H -1 0 -1 0' for edge in haplotig_graph.node[region_1_name]['htig']['path']]
+        exp_all_p_edges = { '{}p01'.format(ctg_id): ['{ctg_id}p01 '.format(ctg_id=ctg_id) + ' '.join(edge[1:3]) + ' N H -1 0 -1 0' for edge in haplotig_graph.nodes[region_2_name]['htig']['path']],
+                            '{}p02'.format(ctg_id): ['{ctg_id}p02 '.format(ctg_id=ctg_id) + ' '.join(edge[1:3]) + ' N H -1 0 -1 0' for edge in haplotig_graph.nodes[region_1_name]['htig']['path']]
                          }
         exp_all_h_seqs = {}
         exp_all_h_edges = {}
@@ -1309,12 +1309,12 @@ def test_extract_unzipped_ctgs_5(tmpdir):
         exp_all_p_seqs = {  '{}p01'.format(ctg_id): region_2_seq_1,
                             '{}p02'.format(ctg_id): region_1_seq
                          }
-        exp_all_p_edges = { '{}p02'.format(ctg_id): ['{ctg_id}p02 '.format(ctg_id=ctg_id) + ' '.join(edge[1:3]) + ' N H 1 0 1 0' for edge in haplotig_graph.node[region_2_name_1]['htig']['path']],
-                            '{}p01'.format(ctg_id): ['{ctg_id}p01 '.format(ctg_id=ctg_id) + ' '.join(edge[1:3]) + ' N H -1 0 -1 0' for edge in haplotig_graph.node[region_1_name]['htig']['path']],
+        exp_all_p_edges = { '{}p02'.format(ctg_id): ['{ctg_id}p02 '.format(ctg_id=ctg_id) + ' '.join(edge[1:3]) + ' N H 1 0 1 0' for edge in haplotig_graph.nodes[region_2_name_1]['htig']['path']],
+                            '{}p01'.format(ctg_id): ['{ctg_id}p01 '.format(ctg_id=ctg_id) + ' '.join(edge[1:3]) + ' N H -1 0 -1 0' for edge in haplotig_graph.nodes[region_1_name]['htig']['path']],
                          }
         exp_all_h_seqs = {  '{}p02_001'.format(ctg_id): region_2_seq_2
                          }
-        exp_all_h_edges = { '{}p02_001'.format(ctg_id): ['{ctg_id}p02_001 '.format(ctg_id=ctg_id) + ' '.join(edge[1:3]) + ' N H 1 1 1 1' for edge in haplotig_graph.node[region_2_name_2]['htig']['path']]
+        exp_all_h_edges = { '{}p02_001'.format(ctg_id): ['{ctg_id}p02_001 '.format(ctg_id=ctg_id) + ' '.join(edge[1:3]) + ' N H 1 1 1 1' for edge in haplotig_graph.nodes[region_2_name_2]['htig']['path']]
                           }
         exp_all_h_paf = {}
 

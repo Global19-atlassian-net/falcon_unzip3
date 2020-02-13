@@ -3,7 +3,7 @@ source bamboo_setup.sh
 set -vex
 
 WHEELHOUSE="/mnt/software/p/python/wheelhouse/develop/"
-pip3 install --user --find-links=${WHEELHOUSE} pytest networkx pysam msgpack pylint future intervaltree pypeflow falcon_kit wheel
+pip3 install --user --find-links=${WHEELHOUSE} pytest networkx pysam msgpack pylint intervaltree pypeflow falcon_kit wheel
 
 #pushd ../pypeFLOW
 #pip3 install -v --user --no-deps --edit .

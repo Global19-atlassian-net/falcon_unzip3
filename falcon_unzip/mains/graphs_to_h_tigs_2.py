@@ -40,9 +40,10 @@ global all_rid_to_phase
 global all_flat_rid_to_phase
 global all_haplotigs_for_ctg
 global sg_edges
-global p_ctg_seqs
+#global p_ctg_seqs
 global p_ctg_tiling_paths
 global LOG
+global falcon_p_ctg_fa_obj
 LOG = logging.getLogger() # root, to inherit from sub-loggers
 
 """
@@ -73,11 +74,10 @@ def run_generate_haplotigs_for_ctg(input_):
 
     try:
         global all_haplotigs_for_ctg
-        global p_ctg_seqs
         global sg_edges
         global p_ctg_tiling_paths
 
-        p_ctg_seq = p_ctg_seqs[ctg_id]
+        p_ctg_seq = falcon_p_ctg_fa_obj.fetch(ctg_id)
         p_ctg_tiling_path = p_ctg_tiling_paths[ctg_id]
         snp_haplotigs = all_haplotigs_for_ctg.get(ctg_id, {})
         return generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
@@ -229,30 +229,35 @@ def generate_haplotigs_for_ctg(ctg_id, p_ctg_seq, p_ctg_tiling_path, sg_edges,
     #########################################################
     num_threads = 16
     mapping_out_prefix = os.path.join(out_dir, 'aln_snp_hasm_ctg')
-    sam_path = mapping_out_prefix + '.sam'
+    mapping_out_path = mapping_out_prefix + '.sam'
 
     def excomm(cmd):
         execute.execute_command(cmd, logger)
 
     if snp_haplotigs:
-        # BLASR crashes on empty files, so address that.
         p_ctg_fn = os.path.join(proto_dir, 'ref.fasta')
-        blasr_params = '--minMatch 15 --maxMatch 25 --advanceHalf --advanceExactMatches 10 --bestn 1 --nproc {} --noSplitSubreads'.format(num_threads)
-        excomm('blasr {} {} {} --sam --out {}.tmp.sam'.format(
-                blasr_params, aln_snp_hasm_ctg_path, p_ctg_fn, mapping_out_prefix))
-        excomm('samtools sort {pre}.tmp.sam -o {pre}.sam'.format(
-                pre=mapping_out_prefix))
-        excomm('rm -f {pre}.tmp.sam'.format(
-                pre=mapping_out_prefix))
+        # The "-g" parameter allows a larger gap for chain elongation, and "-r" is the bandwidth.
+        aln_params = '--eqx -x map-pb -t {threads} -g 10000 -r 10000'.format(threads=num_threads)
+        # Align and filter secondary alignments.
+        excomm('minimap2 -a {params} {ref} {queries} | samtools view -h -F 0x100 > {out_prefix}.tmp.sam'.format(
+                params=aln_params, ref=p_ctg_fn, queries=aln_snp_hasm_ctg_path, out_prefix=mapping_out_prefix))
+        excomm('samtools sort {out_prefix}.tmp.sam -o {out}'.format(
+                out_prefix=mapping_out_prefix, out=mapping_out_path))
+        excomm('rm -f {out_prefix}.tmp.sam'.format(
+                out_prefix=mapping_out_prefix))
 
     fp_proto_log('Loading the alignments.')
 
-    aln_dict = load_and_hash_sam(sam_path)
+    aln_dict = load_and_hash_sam(mapping_out_path)
 
     # Debug verbose.
     fp_proto_log('Loaded alignments:')
     for qname, aln in aln_dict.items():
-        fp_proto_log(str(aln))
+        # [aln.qname, aln.reference_name, score, identity,
+        #  0, aln.query_alignment_start, aln.query_alignment_end, aln.query_length,
+        #  (1 if aln.is_reverse == True else 0), aln.reference_start, aln.reference_end, ref_len, 254, aln]
+        msg = str(aln[:-1]) # no str() for pysam.libcalignedsegment.AlignedSegment object
+        fp_proto_log(msg)
 
     #########################################################
     # Filter out overlapping haplotigs for each phasing block.
@@ -955,7 +960,7 @@ def update_haplotig_graph(haplotig_graph, phase_alias_map):
     # Update the aliases.
     for v in haplotig_graph2.nodes():
         # v = htig['name']
-        vdata = haplotig_graph2.node[v]
+        vdata = haplotig_graph2.nodes[v]
         vphase = vdata['phase']
         vphase_alias = phase_alias_map.get(vphase, -1)
         vdata['phase_alias'] = vphase_alias
@@ -965,10 +970,10 @@ def update_haplotig_graph(haplotig_graph, phase_alias_map):
         # Check if there are any edges which resolve
         # to the same alias in the graph.
         matching_alias = False
-        v_alias = haplotig_graph2.node[v]['phase_alias']
+        v_alias = haplotig_graph2.nodes[v]['phase_alias']
         nonmatching_edges = set()
         for vv, ww in haplotig_graph2.out_edges(v):
-            ww_alias = haplotig_graph2.node[ww]['phase_alias']
+            ww_alias = haplotig_graph2.nodes[ww]['phase_alias']
             if ww_alias == v_alias:
                 matching_alias = True
             else:
@@ -986,8 +991,8 @@ def update_haplotig_graph(haplotig_graph, phase_alias_map):
 
     # Update the weights of any remaining edges.
     for v, w in haplotig_graph2.edges():
-        v_alias = haplotig_graph2.node[v]['phase_alias']
-        w_alias = haplotig_graph2.node[w]['phase_alias']
+        v_alias = haplotig_graph2.nodes[v]['phase_alias']
+        w_alias = haplotig_graph2.nodes[w]['phase_alias']
         if v_alias == -1 and w_alias == -1:
             weight = 50
         elif v_alias == -1 or w_alias == -1:
@@ -1034,7 +1039,7 @@ def construct_ctg_seq(haplotig_graph, new_ctg_id, node_path):
     # The sequence is composed of clipped haplotigs, so plain concatenation is valid.
     new_ctg_seq = ''
     for v in node_path:
-        node = haplotig_graph.node[v]
+        node = haplotig_graph.nodes[v]
         if node['label'] == 'source' or node['label'] == 'sink':
             continue
         new_ctg_seq += node['htig']['seq']
@@ -1047,7 +1052,7 @@ def construct_ctg_seq(haplotig_graph, new_ctg_id, node_path):
     path_seq_len = 0
 
     for v in node_path:
-        node = haplotig_graph.node[v]
+        node = haplotig_graph.nodes[v]
 
         if node['label'] == 'source':
             node_start_coords[v] = 0
@@ -1381,9 +1386,10 @@ def define_globals(args):
     global all_rid_to_phase
     global all_flat_rid_to_phase
     global all_haplotigs_for_ctg
-    global p_ctg_seqs
+    #global p_ctg_seqs
     global sg_edges
     global p_ctg_tiling_paths
+    global falcon_p_ctg_fa_obj
 
     fc_asm_path = args.fc_asm_path
     fc_hasm_path = args.fc_hasm_path
@@ -1399,21 +1405,29 @@ def define_globals(args):
     with io.open_progress(args.rid_phase_map) as f:
         for row in f:
             row = row.strip().split()
+            # TODO - it is not clear if this is safe, but if it is we should do it
+            #if int(row[2]) == -1:
+            #    continue
             all_rid_to_phase.setdefault(row[1], {})
             all_rid_to_phase[row[1]][row[0]] = (int(row[2]), int(row[3]))
             all_flat_rid_to_phase[row[0]] = (row[1], int(row[2]), int(row[3]))
 
     # Load the primary contig sequences.
     LOG.info('Loading the 2-asm-falcon primary contigs.')
-    p_ctg_seqs = load_all_seq(os.path.join(fc_asm_path, "p_ctg.fasta"))
-    LOG.info('Done loading 2-asm-falcon primary contigs.')
+
+    #TODO remove hard coded path
+    falcon_p_ctg_fa = os.path.join(fc_asm_path, "p_ctg.fasta")
+    falcon_p_ctg_fa_obj = pysam.FastaFile(falcon_p_ctg_fa)  # pylint: disable=no-member
+
+    #p_ctg_seqs = falcon_p_ctg_fa_obj.references
 
     LOG.info('Loading tiling paths.')
     # Hash the lengths of the primary contig sequences.
     # Needed to correctly assign node coords when loading tiling paths
-    p_ctg_seq_lens = {}
-    for p_ctg_id, ctg_seq in p_ctg_seqs.items():
-        p_ctg_seq_lens[p_ctg_id] = len(ctg_seq)
+    p_ctg_seq_lens = collections.OrderedDict()
+    with pysam.FastxFile(falcon_p_ctg_fa) as fh:  # pylint: disable=no-member
+        for entry in fh:
+            p_ctg_seq_lens[entry.name] = falcon_p_ctg_fa_obj.get_reference_length(entry.name)
     # Load the tiling path of the primary contig, and assign coordinants to nodes.
     p_ctg_tiling_paths = tiling_path.load_tiling_paths(os.path.join(fc_asm_path, "p_ctg_tiling_path"), contig_lens=p_ctg_seq_lens, whitelist_seqs=None)
     LOG.info('Done loading tiling paths.')
@@ -1507,8 +1521,8 @@ def cmd_split(args):
 
     #TODO remove hard coded path to FAI
     falcon_p_ctg_fai_fn = "../../../2-asm-falcon/p_ctg.fasta.fai"
-    top.fai2ctgs(falcon_p_ctg_fai_fn, '3-unzip/2-htigs/split/p_ctg_names.json')
-    pnames = io.deserialize('3-unzip/2-htigs/split/p_ctg_names.json') 
+    top.fai2ctgs(falcon_p_ctg_fai_fn, 'p_ctg_names.json')
+    pnames = io.deserialize('p_ctg_names.json')  # currently in top-dir
     ctg_id_list = list(pnames)
 
     LOG.info('Creating units-of-work for ctg_id_list (though many will be skipped): {}'.format(ctg_id_list))
